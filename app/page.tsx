@@ -9,8 +9,9 @@ import {
   getFirstCollision,
   UniqueIdentifier,
   closestCorners,
+  CollisionDetection,
+  Collision,
 } from '@dnd-kit/core'
-import {CollisionPriority} from '@dnd-kit/abstract';
 import {
   SortableContext,
   useSortable,
@@ -43,11 +44,11 @@ const initialData: Item[] = [
 ]
 
 export default function App() {
-  const [items, setItems] = useState < Item[] > (initialData)
-  const [activeId, setActiveId] = useState < UniqueIdentifier | null > (null)
-  const lastOverId = useRef < UniqueIdentifier | null > (null)
+  const [items, setItems] = useState<Item[]>(initialData)
+  const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null)
+  const lastOverId = useRef<UniqueIdentifier | null>(null)
 
-  const collisionDetectionStrategy = useCallback((args) => {
+  const collisionDetectionStrategy: CollisionDetection = useCallback((args) => {
     const pointerIntersections = pointerWithin(args)
     const intersections = pointerIntersections.length > 0 ? pointerIntersections : closestCorners(args)
 
@@ -55,7 +56,7 @@ export default function App() {
     const overId = getFirstCollision(intersections, 'id')
     lastOverId.current = overId || lastOverId.current
 
-    return [{ id: lastOverId.current }]
+    return [{ id: lastOverId.current } as Collision]
   }, [])
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -75,28 +76,28 @@ export default function App() {
 
   return (
     <main>
-    <DndContext
-      collisionDetection={collisionDetectionStrategy}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-    >
-      <SortableContext items={items.map(item => item.id)} strategy={verticalListSortingStrategy}>
-        <SortableItems items={items} />
-      </SortableContext>
+      <DndContext
+        collisionDetection={collisionDetectionStrategy}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext items={items.map(item => item.id)} strategy={verticalListSortingStrategy}>
+          <SortableItems items={items} />
+        </SortableContext>
 
-      <DragOverlay>
-        {activeId ? (
-          <div style={{
+        <DragOverlay>
+          {activeId ? (
+            <div style={{
               padding: '10px',
               background: 'lightgray',
               border: '1px solid #151515',
               borderRadius: '5px',
             }}>
-            Dragging {activeId}
-          </div>
-        ) : null}
-      </DragOverlay>
-    </DndContext>
+              Dragging {activeId}
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
     </main>
   )
 }
@@ -121,7 +122,7 @@ function SortableItem({ id }: { id: string }) {
     transform,
     transition,
     isDragging
-  } = useSortable({ id, type: 'item' })
+  } = useSortable({ id })
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -149,9 +150,6 @@ function SortableContainer({ id, items }: { id: string, items: Item[] }) {
     isDragging
   } = useSortable({
     id,
-    collisionPriority: CollisionPriority.Low,
-    type: 'container',
-    accept: ['item'],
   })
 
   const [showFooter, setShowFooter] = useState(false)
@@ -171,7 +169,7 @@ function SortableContainer({ id, items }: { id: string, items: Item[] }) {
     border: '1px solid #888',
     borderRadius: '5px',
     display: 'flex',
-    flexDirection: 'column',
+    flexDirection: 'column' as const,
     gap: '1rem',
     cursor: isDragging ? 'grabbing' : 'grab',
   }
@@ -196,13 +194,18 @@ function SortableContainer({ id, items }: { id: string, items: Item[] }) {
 function moveItem(items: Item[], activeId: UniqueIdentifier, overId: UniqueIdentifier): Item[] {
   console.log(`Moving item ${activeId} over ${overId}`)
 
-  const { activeItem, activePath } = findItem(items, activeId)
-  const { overItem, overPath } = findItem(items, overId)
+  const activeResult = findItem(items, activeId)
+  const overResult = findItem(items, overId)
 
-  if (!activeItem || !activePath || !overItem || !overPath) {
-    console.error('Active or Over item not found:', { activeItem, overItem })
+  // Check if either result is undefined
+  if (!activeResult || !overResult) {
+    console.error('Active or Over item not found:', { activeResult, overResult })
     return items
   }
+
+  const { activeItem, activePath } = activeResult
+  const { activeItem: overItem, activePath: overPath } = overResult
+
 
   const newItems = structuredClone(items) // Deep copy to avoid mutation
 
@@ -224,8 +227,19 @@ function moveItem(items: Item[], activeId: UniqueIdentifier, overId: UniqueIdent
       targetContainer[overPath[overPath.length - 1]].items = []
     }
 
-    targetContainer[overPath[overPath.length - 1]].items.push(activeItem)
-    console.log(`Inserted ${activeItem.id} into empty container ${overItem.id}`)
+    const target = targetContainer[overPath[overPath.length - 1]]
+
+    if (target && !target.items) {
+      target.items = []
+    }
+
+    if (target) {
+      target.items?.push(activeItem)
+      console.log(`Inserted ${activeItem.id} into empty container ${overItem.id}`)
+    } else {
+      console.error('Target container not found')
+      return items
+    }
 
     // Remove the item from its previous position
     return removeActiveItem(newItems, activePath)
@@ -262,30 +276,38 @@ function removeActiveItem(items: Item[], activePath: number[]) {
   return items
 }
 
-function findItem(items: Item[], id: UniqueIdentifier) {
+function findItem(
+  items: Item[],
+  id: UniqueIdentifier
+): { activeItem: Item; activePath: number[] } | undefined {
   let path: number[] | null = null
   let foundItem: Item | null = null
 
   function search(items: Item[], currentPath: number[]) {
     for (let i = 0; i < items.length; i++) {
       const item = items[i]
+
       if (item.id === id) {
         path = [...currentPath, i]
         foundItem = item
         return
       }
+
       if (item.type === 'container' && item.items) {
         search(item.items, [...currentPath, i])
+
+        // If the item was found in the recursive search, exit the loop
+        if (foundItem) return
       }
     }
   }
 
   search(items, [])
 
+  // Return undefined if no item was found
   if (!foundItem || !path) {
-    console.error(`Item with id ${id} not found`)
-    return { activeItem: null, activePath: null, overItem: null, overPath: null }
+    return undefined
   }
 
-  return { activeItem: foundItem, activePath: path, overItem: foundItem, overPath: path }
+  return { activeItem: foundItem, activePath: path }
 }
