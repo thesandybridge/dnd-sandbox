@@ -63,40 +63,48 @@ export default function App() {
 
   const collisionDetectionStrategy: CollisionDetection = useCallback(
     (args) => {
-      const { droppableContainers } = args;
+      const { active, droppableContainers } = args;
 
-      if (activeId && activeId in items) {
-        return closestCenter({
-          ...args,
-          droppableContainers: droppableContainers.filter(
-            (container) => container.id in items
-          ),
-        });
-      }
+      // Step 1: Start by detecting collisions using `closestCenter` for all items (top-level and containers)
+      const centerIntersections = closestCenter(args);
 
-      const pointerIntersections = pointerWithin(args);
-      const intersections = pointerIntersections.length > 0
-        ? pointerIntersections
-        : closestCorners(args);
+      let overId = getFirstCollision(centerIntersections, 'id');
 
-      let overId = getFirstCollision(intersections, 'id');
+      if (overId) {
+        const overContainer = items.find(item => item.id === overId);
 
-      if (overId && overId in items) {
-        const containerItems = items[overId].items || [];
-        if (containerItems.length > 0) {
-          overId = closestCenter({
+        if (overContainer && overContainer.type === 'container' && overContainer.items?.length) {
+          // Step 2: We're over a container with items, so switch to `closestCorners` for items inside the container
+          const containerIntersections = closestCorners({
             ...args,
             droppableContainers: droppableContainers.filter(
-              (container) =>
-                container.id !== overId && containerItems.includes(container.id)
+              (container) => overContainer.items?.includes(container.id)
             ),
-          })[0]?.id;
+          });
+
+          // Prioritize the closest item inside the container
+          const closestContainerItem = getFirstCollision(containerIntersections, 'id');
+
+          // Step 3: If the pointer is closer to an item in the container, use that
+          if (closestContainerItem) {
+            overId = closestContainerItem;
+          }
+        }
+
+        // Step 4: Detect if the pointer is moving out of the container and should be treated as moving back to the top-level
+        const pointerIntersections = pointerWithin(args);
+        const isPointerOutsideContainer = pointerIntersections.length > 0 && !overContainer?.items?.includes(overId);
+
+        if (isPointerOutsideContainer) {
+          // Move the item out of the container
+          overId = getFirstCollision(pointerIntersections, 'id');
         }
       }
 
+      // Return the `overId` for the closest item (inside a container or top-level)
       return overId ? [{ id: overId }] : [];
     },
-    [activeId, items]
+    [items]
   );
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -197,6 +205,18 @@ function SortableItems({ items, overId, isOverTop }: { items: Item[], overId: Un
   )
 }
 
+function Indicator() {
+  return (
+    <div
+      style={{
+        height: '4px',
+        backgroundColor: 'blue',
+        transition: '0.2s',
+      }}
+    />
+  )
+}
+
 function SortableItem({ id, isOver, isOverTop }: { id: string, isOver: boolean, isOverTop: boolean }) {
 
   const {
@@ -220,25 +240,13 @@ function SortableItem({ id, isOver, isOverTop }: { id: string, isOver: boolean, 
   return (
     <>
       {isOver && isOverTop && (
-        <div
-          style={{
-            height: '4px',
-            backgroundColor: 'blue',
-            transition: '0.2s',
-          }}
-        />
+        <Indicator />
       )}
       <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
         {id}
       </div>
       {isOver && !isOverTop && (
-        <div
-          style={{
-            height: '4px',
-            backgroundColor: 'blue',
-            transition: '0.2s',
-          }}
-        />
+        <Indicator />
       )}
     </>
   )
@@ -280,19 +288,27 @@ function SortableContainer({ id, items, overId, isOverTop }: { id: string, items
   }
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-      <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>
-        {id} (Container)
-      </div>
-      <SortableContext items={items.map(item => item.id)} strategy={verticalListSortingStrategy}>
-        <SortableItems items={items} overId={overId} isOverTop={isOverTop} />
-      </SortableContext>
-      {showFooter && (
-        <footer>
-          This is the footer of a container
-        </footer>
+    <>
+      {id === overId && isOverTop && (
+        <Indicator />
       )}
-    </div>
+      <div ref={setNodeRef} style={style} {...attributes} {...listeners} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+        <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>
+          {id} (Container)
+        </div>
+        <SortableContext items={items.map(item => item.id)} strategy={verticalListSortingStrategy}>
+          <SortableItems items={items} overId={overId} isOverTop={isOverTop} />
+        </SortableContext>
+        {showFooter && (
+          <footer>
+            This is the footer of a container
+          </footer>
+        )}
+      </div>
+      {id === overId && !isOverTop && (
+        <Indicator />
+      )}
+    </>
   )
 }
 
