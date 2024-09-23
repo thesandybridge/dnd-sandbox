@@ -1,18 +1,22 @@
 'use client'
-import React, { useState, useCallback, useRef } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import {
   DndContext,
   DragEndEvent,
   DragStartEvent,
   DragOverEvent,
   DragOverlay,
-  pointerWithin,
   getFirstCollision,
   UniqueIdentifier,
   closestCorners,
   closestCenter,
+  pointerWithin,
   CollisionDetection,
-  Collision,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
 } from '@dnd-kit/core'
 import {
   SortableContext,
@@ -48,32 +52,59 @@ const initialData: Item[] = [
 export default function App() {
   const [items, setItems] = useState<Item[]>(initialData)
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null)
-  const lastOverId = useRef<UniqueIdentifier | null>(null)
+  const lastOverId = useRef<UniqueIdentifier | null>(null); // Cache the last known overId
 
-  const customCollisionDetection: CollisionDetection = (args) => {
-    const { droppableContainers } = args;
+  const sensors = useSensors(
+    useSensor(MouseSensor),
+    useSensor(TouchSensor),
+    useSensor(KeyboardSensor),
+  );
 
-    // First, try closestCorners for items inside containers
-    const closestCornersIntersections = closestCorners(args);
-    const closestCornersCollision = getFirstCollision(closestCornersIntersections, 'id') as UniqueIdentifier | null;
+  const collisionDetectionStrategy: CollisionDetection = useCallback(
+    (args) => {
+      const { active, droppableContainers } = args;
 
-    // Safely find the droppable container with the matching id
-    const container = closestCornersCollision
-      ? Object.values(droppableContainers).find(droppable => droppable?.id === closestCornersCollision)
-      : null;
+      if (activeId && activeId in items) {
+        return closestCenter({
+          ...args,
+          droppableContainers: droppableContainers.filter(
+            (container) => container.id in items
+          ),
+        });
+      }
 
-    // Check if the found container is a 'container' type
-    const isOverContainer = container?.data?.current?.type === 'container';
+      // Start by finding any intersecting droppable
+      const pointerIntersections = pointerWithin(args);
+      const intersections =
+        pointerIntersections.length > 0
+          ? pointerIntersections // If there are droppables intersecting with the pointer, return those
+          : closestCorners(args); // Fallback to closestCorners for general collision detection
 
-    // If we're inside a container, use closestCorners logic
-    if (isOverContainer) {
-      return closestCornersIntersections;
-    }
+      let overId = getFirstCollision(intersections, 'id');
 
-    // If we're not inside a container, fallback to closestCenter
-    const closestCenterIntersections = closestCenter(args);
-    return closestCenterIntersections;
-  };
+      // If the overId is a valid container and contains items
+      if (overId && overId in items) {
+        const containerItems = items[overId].items || [];
+
+        if (containerItems.length > 0) {
+          // If a container has items, return the closest item within that container
+          overId = closestCenter({
+            ...args,
+            droppableContainers: droppableContainers.filter(
+              (container) =>
+                container.id !== overId && containerItems.includes(container.id)
+            ),
+          })[0]?.id;
+        }
+      }
+
+      // If no droppable is matched, return the last match
+      lastOverId.current = overId ?? lastOverId.current;
+
+      return lastOverId.current ? [{ id: lastOverId.current }] : [];
+    },
+    [activeId, items]
+  );
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id)
@@ -88,25 +119,17 @@ export default function App() {
 
     setItems(newItems)
     setActiveId(null)
-  }
+    lastOverId.current = null; // Reset the lastOverId
 
-  const handleDragOver = (event: DragOverEvent) => {
-    const { active, over } = event
-
-    if (over) {
-      lastOverId.current = over.id
-
-      // Here, you could also highlight a container or provide other visual feedback
-    }
   }
 
   return (
     <main>
       <DndContext
-        collisionDetection={customCollisionDetection}
+        collisionDetection={collisionDetectionStrategy}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
-        onDragOver={handleDragOver}
+        sensors={sensors}
       >
         <SortableContext items={items.map(item => item.id)} strategy={verticalListSortingStrategy}>
           <SortableItems items={items} />
@@ -236,14 +259,19 @@ function moveItem(items: Item[], activeId: UniqueIdentifier, overId: UniqueIdent
   // Deep copy to avoid mutation
   const newItems = structuredClone(items);
 
-  // Handle reordering of containers or items at the same level
-  const isSameLevel = JSON.stringify(activePath.slice(0, -1)) === JSON.stringify(overPath.slice(0, -1));
+  // Prevent moving containers inside other containers
+  if (activeItem.type === 'container' && overItem.parentType === 'container') {
+    console.log("Containers cannot be moved inside other containers");
+    return items;
+  }
 
-  let currentLevel = newItems;
-  const targetLevel = newItems;
+  // Check if the item is being moved between different containers or levels
+  const isSameLevel = isSameContainer(activePath, overPath);
+  const isMovingUpward = activePath[0] > overPath[0];
 
   if (isSameLevel) {
     // Reordering within the same container or level
+    let currentLevel = newItems;
     for (let i = 0; i < activePath.length - 1; i++) {
       currentLevel = currentLevel[activePath[i]].items!;
     }
@@ -257,28 +285,42 @@ function moveItem(items: Item[], activeId: UniqueIdentifier, overId: UniqueIdent
     currentLevel.splice(overIndex, 0, movedItem);
 
     console.log(`Moved ${activeItem.id} within the same container or level from index ${activeIndex} to ${overIndex}`);
-
   } else {
-    // Handle moving between different containers or to the top level
-
-    // Check if we're moving upward or downward by comparing indices
-    const isMovingUpward = activePath[0] > overPath[0];
-
-    if (isMovingUpward) {
-      // Moving upward, remove the item first to prevent index shifts
-      removeActiveItem(newItems, activePath);
-      insertItem(newItems, activeItem, overPath, overItem);
+    // Handle moving between different containers or from container to top level
+    if (overPath.length === 1) {
+      // Moving to the top level
+      if (isMovingUpward && activePath[0] > overPath[0]) {
+        // Moving upward out of a container to a position before the container
+        insertItem(newItems, activeItem, overPath, overItem);
+        removeActiveItem(newItems, activePath);
+      } else {
+        // Moving downward or to a position after the container
+        removeActiveItem(newItems, activePath);
+        insertItem(newItems, activeItem, overPath, overItem);
+      }
     } else {
-      // Moving downward, insert the item first, then remove it to avoid index shift issues
-      insertItem(newItems, activeItem, overPath, overItem);
-      removeActiveItem(newItems, activePath);
+      // Moving between containers (not top level)
+      if (isMovingUpward) {
+        // Remove first if moving upward to prevent shift issues
+        removeActiveItem(newItems, activePath);
+        insertItem(newItems, activeItem, overPath, overItem);
+      } else {
+        // Moving downward, insert first then remove
+        insertItem(newItems, activeItem, overPath, overItem);
+        removeActiveItem(newItems, activePath);
+      }
     }
   }
 
   return newItems;
 }
 
-// Helper function to remove the active item from its original container
+// Helper function to check if two paths are in the same container
+function isSameContainer(activePath: number[], overPath: number[]): boolean {
+  return JSON.stringify(activePath.slice(0, -1)) === JSON.stringify(overPath.slice(0, -1));
+}
+
+// Helper function to remove the active item from the original container
 function removeActiveItem(items: Item[], activePath: number[]) {
   let currentLevel = items;
 
@@ -289,6 +331,7 @@ function removeActiveItem(items: Item[], activePath: number[]) {
 
   // Remove the active item from its current container level
   currentLevel.splice(activePath[activePath.length - 1], 1);
+  console.log(`Removed item from original container`);
   return items;
 }
 
@@ -297,20 +340,13 @@ function insertItem(newItems: Item[], activeItem: Item, overPath: number[], over
   let targetLevel = newItems;
 
   // Insert the item into the new container (or top level)
-  if (overItem.parentType === 'container') {
-    // Insert into a new container
-    for (let i = 0; i < overPath.length - 1; i++) {
-      targetLevel = targetLevel[overPath[i]].items!;
-    }
-    const overIndex = overPath[overPath.length - 1];
-    targetLevel.splice(overIndex, 0, activeItem);
-    console.log(`Inserted ${activeItem.id} into position ${overIndex} in the new container`);
-  } else {
-    // Insert into the top level
-    const overIndex = overPath[overPath.length - 1];
-    newItems.splice(overIndex, 0, activeItem);
-    console.log(`Moved ${activeItem.id} to the top level at position ${overIndex}`);
+  for (let i = 0; i < overPath.length - 1; i++) {
+    targetLevel = targetLevel[overPath[i]].items!;
   }
+
+  const overIndex = overPath[overPath.length - 1];
+  targetLevel.splice(overIndex, 0, activeItem);
+  console.log(`Inserted ${activeItem.id} into position ${overIndex} in the new container`);
 }
 
 // Recursive search to find the item by id
