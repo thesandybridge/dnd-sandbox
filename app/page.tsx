@@ -265,6 +265,29 @@ function moveItem(items: Item[], activeId: UniqueIdentifier, overId: UniqueIdent
     return items;
   }
 
+  if (overItem.type === 'container' && (!overItem.items || overItem.items.length === 0)) {
+    // Find the empty container in the newItems array
+    let targetLevel = newItems;
+    for (let i = 0; i < overPath.length - 1; i++) {
+      targetLevel = targetLevel[overPath[i]].items!;
+    }
+
+    const emptyContainer = targetLevel[overPath[overPath.length - 1]];
+
+    if (!emptyContainer.items) {
+      emptyContainer.items = [];
+    }
+
+    // Insert the active item into the empty container
+    emptyContainer.items.push(activeItem);
+
+    // Remove the active item from its original position
+    removeActiveItem(newItems, activePath);
+
+    console.log(`Moved ${activeItem.id} into empty container ${overItem.id}`);
+    return newItems;
+  }
+
   // Check if the item is being moved between different containers or levels
   const isSameLevel = isSameContainer(activePath, overPath);
   const isMovingUpward = activePath[0] > overPath[0];
