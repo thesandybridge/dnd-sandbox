@@ -52,7 +52,8 @@ const initialData: Item[] = [
 export default function App() {
   const [items, setItems] = useState<Item[]>(initialData)
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null)
-  const lastOverId = useRef<UniqueIdentifier | null>(null); // Cache the last known overId
+  const [overId, setOverId] = useState<UniqueIdentifier | null>(null) // Store the item being hovered over
+  const [isOverTop, setIsOverTop] = useState(false)
 
   const sensors = useSensors(
     useSensor(MouseSensor),
@@ -62,7 +63,7 @@ export default function App() {
 
   const collisionDetectionStrategy: CollisionDetection = useCallback(
     (args) => {
-      const { active, droppableContainers } = args;
+      const { droppableContainers } = args;
 
       if (activeId && activeId in items) {
         return closestCenter({
@@ -73,21 +74,16 @@ export default function App() {
         });
       }
 
-      // Start by finding any intersecting droppable
       const pointerIntersections = pointerWithin(args);
-      const intersections =
-        pointerIntersections.length > 0
-          ? pointerIntersections // If there are droppables intersecting with the pointer, return those
-          : closestCorners(args); // Fallback to closestCorners for general collision detection
+      const intersections = pointerIntersections.length > 0
+        ? pointerIntersections
+        : closestCorners(args);
 
       let overId = getFirstCollision(intersections, 'id');
 
-      // If the overId is a valid container and contains items
       if (overId && overId in items) {
         const containerItems = items[overId].items || [];
-
         if (containerItems.length > 0) {
-          // If a container has items, return the closest item within that container
           overId = closestCenter({
             ...args,
             droppableContainers: droppableContainers.filter(
@@ -98,10 +94,7 @@ export default function App() {
         }
       }
 
-      // If no droppable is matched, return the last match
-      lastOverId.current = overId ?? lastOverId.current;
-
-      return lastOverId.current ? [{ id: lastOverId.current }] : [];
+      return overId ? [{ id: overId }] : [];
     },
     [activeId, items]
   );
@@ -110,17 +103,56 @@ export default function App() {
     setActiveId(event.active.id)
   }
 
+  const handleDragOver = (event: DragOverEvent) => {
+    const { over } = event
+
+    // Helper function to check if an item (and its nested items) are in the list
+    const isSortableItem = (id: UniqueIdentifier, items: Item[]): boolean => {
+      return items.some(item =>
+        item.id === id || (item.items && isSortableItem(id, item.items))
+      )
+    }
+
+    if (over && isSortableItem(over.id, items)) {  // Only process if `over` is a valid sortable item
+      setOverId(over.id)
+
+      const rect = over.rect
+
+      if (rect) {
+        const midpoint = rect.top + rect.height / 2
+        const tolerance = rect.height * 0.15 // 15% tolerance for more flexibility
+
+        // Determine whether the pointer is above or below the midpoint
+        const pointerTop = event.active.rect.current.translated?.top!
+
+        // Adding tolerance for top/bottom detection
+        if (pointerTop < midpoint - tolerance) {
+          setIsOverTop(true) // Item is above the midpoint
+        } else if (pointerTop > midpoint + tolerance) {
+          setIsOverTop(false) // Item is below the midpoint
+        } else {
+          setIsOverTop(false) // Default to "below" when near the midpoint
+        }
+      } else {
+        console.warn(`Rect for the over element with id ${over.id} not found`)
+      }
+    } else {
+      // Clear the state if the hovered item is not in the sortable list
+      setOverId(null)
+      setIsOverTop(false)
+    }
+  }
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
     if (!over) return
-
 
     const newItems = moveItem(items, active.id, over.id)
 
     setItems(newItems)
     setActiveId(null)
-    lastOverId.current = null; // Reset the lastOverId
-
+    setOverId(null)
+    setIsOverTop(false)
   }
 
   return (
@@ -129,10 +161,11 @@ export default function App() {
         collisionDetection={collisionDetectionStrategy}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
+        onDragOver={handleDragOver}
         sensors={sensors}
       >
         <SortableContext items={items.map(item => item.id)} strategy={verticalListSortingStrategy}>
-          <SortableItems items={items} />
+          <SortableItems items={items} overId={overId} isOverTop={isOverTop} />
         </SortableContext>
 
         <DragOverlay>
@@ -152,19 +185,20 @@ export default function App() {
   )
 }
 
-function SortableItems({ items }: { items: Item[] }) {
+function SortableItems({ items, overId, isOverTop }: { items: Item[], overId: UniqueIdentifier | null, isOverTop: boolean }) {
   return (
     <>
       {items.map((item) => (
         item.type === 'item'
-          ? <SortableItem key={item.id} id={item.id} />
-          : <SortableContainer key={item.id} id={item.id} items={item.items || []} />
+          ? <SortableItem key={item.id} id={item.id} isOver={item.id === overId} isOverTop={isOverTop} />
+          : <SortableContainer key={item.id} id={item.id} items={item.items || []} overId={overId} isOverTop={isOverTop} />
       ))}
     </>
   )
 }
 
-function SortableItem({ id }: { id: string }) {
+function SortableItem({ id, isOver, isOverTop }: { id: string, isOver: boolean, isOverTop: boolean }) {
+
   const {
     attributes,
     listeners,
@@ -184,13 +218,34 @@ function SortableItem({ id }: { id: string }) {
   }
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      {id}
-    </div>
+    <>
+      {isOver && isOverTop && (
+        <div
+          style={{
+            height: '4px',
+            backgroundColor: 'blue',
+            transition: '0.2s',
+          }}
+        />
+      )}
+      <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+        {id}
+      </div>
+      {isOver && !isOverTop && (
+        <div
+          style={{
+            height: '4px',
+            backgroundColor: 'blue',
+            transition: '0.2s',
+          }}
+        />
+      )}
+    </>
   )
 }
 
-function SortableContainer({ id, items }: { id: string, items: Item[] }) {
+function SortableContainer({ id, items, overId, isOverTop }: { id: string, items: Item[], overId: UniqueIdentifier | null, isOverTop: boolean }) {
+
   const {
     attributes,
     listeners,
@@ -230,7 +285,7 @@ function SortableContainer({ id, items }: { id: string, items: Item[] }) {
         {id} (Container)
       </div>
       <SortableContext items={items.map(item => item.id)} strategy={verticalListSortingStrategy}>
-        <SortableItems items={items} />
+        <SortableItems items={items} overId={overId} isOverTop={isOverTop} />
       </SortableContext>
       {showFooter && (
         <footer>
@@ -314,22 +369,22 @@ function moveItem(items: Item[], activeId: UniqueIdentifier, overId: UniqueIdent
       // Moving to the top level
       if (isMovingUpward && activePath[0] > overPath[0]) {
         // Moving upward out of a container to a position before the container
-        insertItem(newItems, activeItem, overPath, overItem);
+        insertItem(newItems, activeItem, overPath);
         removeActiveItem(newItems, activePath);
       } else {
         // Moving downward or to a position after the container
         removeActiveItem(newItems, activePath);
-        insertItem(newItems, activeItem, overPath, overItem);
+        insertItem(newItems, activeItem, overPath);
       }
     } else {
       // Moving between containers (not top level)
       if (isMovingUpward) {
         // Remove first if moving upward to prevent shift issues
         removeActiveItem(newItems, activePath);
-        insertItem(newItems, activeItem, overPath, overItem);
+        insertItem(newItems, activeItem, overPath);
       } else {
         // Moving downward, insert first then remove
-        insertItem(newItems, activeItem, overPath, overItem);
+        insertItem(newItems, activeItem, overPath);
         removeActiveItem(newItems, activePath);
       }
     }
@@ -359,7 +414,7 @@ function removeActiveItem(items: Item[], activePath: number[]) {
 }
 
 // Helper function to insert the active item into the new position
-function insertItem(newItems: Item[], activeItem: Item, overPath: number[], overItem: Item) {
+function insertItem(newItems: Item[], activeItem: Item, overPath: number[]) {
   let targetLevel = newItems;
 
   // Insert the item into the new container (or top level)
