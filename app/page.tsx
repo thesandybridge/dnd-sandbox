@@ -123,12 +123,12 @@ export default function App() {
         const tolerance = rect.height * 0.15 // 15% tolerance for more flexibility
 
         // Determine whether the pointer is above or below the midpoint
-        const pointerTop = event.active.rect.current.translated?.top!
+        const pointerTop = event.active.rect.current.translated?.top
 
         // Adding tolerance for top/bottom detection
-        if (pointerTop < midpoint - tolerance) {
+        if (pointerTop! < midpoint - tolerance) {
           setIsOverTop(true) // Item is above the midpoint
-        } else if (pointerTop > midpoint + tolerance) {
+        } else if (pointerTop! > midpoint + tolerance) {
           setIsOverTop(false) // Item is below the midpoint
         } else {
           setIsOverTop(false) // Default to "below" when near the midpoint
