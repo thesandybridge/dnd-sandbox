@@ -219,90 +219,98 @@ function SortableContainer({ id, items }: { id: string, items: Item[] }) {
 }
 
 function moveItem(items: Item[], activeId: UniqueIdentifier, overId: UniqueIdentifier): Item[] {
-  console.log(`Moving item ${activeId} over ${overId}`)
+  console.log(`Moving item ${activeId} over ${overId}`);
 
-  const activeResult = findItem(items, activeId)
-  const overResult = findItem(items, overId)
+  const activeResult = findItem(items, activeId);
+  const overResult = findItem(items, overId);
 
   // Check if either result is undefined
   if (!activeResult || !overResult) {
-    console.error('Active or Over item not found:', { activeResult, overResult })
-    return items
+    console.error('Active or Over item not found:', { activeResult, overResult });
+    return items;
   }
 
-  const { activeItem, activePath } = activeResult
-  const { activeItem: overItem, activePath: overPath } = overResult
+  const { activeItem, activePath } = activeResult;
+  const { activeItem: overItem, activePath: overPath } = overResult;
 
   // Deep copy to avoid mutation
-  const newItems = structuredClone(items)
+  const newItems = structuredClone(items);
 
-  // Handle reordering of containers at the same level
-  const isSameLevel = JSON.stringify(activePath.slice(0, -1)) === JSON.stringify(overPath.slice(0, -1))
+  // Handle reordering of containers or items at the same level
+  const isSameLevel = JSON.stringify(activePath.slice(0, -1)) === JSON.stringify(overPath.slice(0, -1));
 
-  // Prevent containers from being moved inside each other, but allow reordering within the same level
-  if (activeItem.type === 'container' && overItem.type === 'container') {
-    if (!isSameLevel) {
-      console.error("Containers cannot be moved inside another container")
-      return items
-    }
-  }
+  let currentLevel = newItems;
+  const targetLevel = newItems;
 
-  let currentLevel = newItems
-  let targetLevel = newItems
-
-  // Handle reordering within the same container or level (items or containers)
   if (isSameLevel) {
-    // Navigate to the level where both active and over items are located
+    // Reordering within the same container or level
     for (let i = 0; i < activePath.length - 1; i++) {
-      currentLevel = currentLevel[activePath[i]].items!
+      currentLevel = currentLevel[activePath[i]].items!;
     }
 
     // Remove the active item from the current level
-    const activeIndex = activePath[activePath.length - 1]
-    const [movedItem] = currentLevel.splice(activeIndex, 1)
+    const activeIndex = activePath[activePath.length - 1];
+    const [movedItem] = currentLevel.splice(activeIndex, 1);
 
     // Insert the item into the new position
-    const overIndex = overPath[overPath.length - 1]
+    const overIndex = overPath[overPath.length - 1];
+    currentLevel.splice(overIndex, 0, movedItem);
 
-    // If the item is moved downward (from a lower index to a higher index),
-    // we do NOT need to adjust the index. Splicing naturally handles it.
-    currentLevel.splice(overIndex, 0, movedItem)
-
-    console.log(`Moved ${activeItem.id} within the same container or level from index ${activeIndex} to ${overIndex}`)
+    console.log(`Moved ${activeItem.id} within the same container or level from index ${activeIndex} to ${overIndex}`);
 
   } else {
-    // Handle moving between different containers
+    // Handle moving between different containers or to the top level
 
-    // First, insert the item into the new container (over item)
-    for (let i = 0; i < overPath.length - 1; i++) {
-      targetLevel = targetLevel[overPath[i]].items!
+    // Check if we're moving upward or downward by comparing indices
+    const isMovingUpward = activePath[0] > overPath[0];
+
+    if (isMovingUpward) {
+      // Moving upward, remove the item first to prevent index shifts
+      removeActiveItem(newItems, activePath);
+      insertItem(newItems, activeItem, overPath, overItem);
+    } else {
+      // Moving downward, insert the item first, then remove it to avoid index shift issues
+      insertItem(newItems, activeItem, overPath, overItem);
+      removeActiveItem(newItems, activePath);
     }
-
-    // Insert into the target container or position
-    const overIndex = overPath[overPath.length - 1]
-    targetLevel.splice(overIndex, 0, activeItem)
-
-    console.log(`Inserted ${activeItem.id} into position ${overIndex} in the new container`)
-
-    // Now remove the item from its original position after insertion
-    removeActiveItem(newItems, activePath)
   }
 
-  return newItems
+  return newItems;
 }
 
-// Helper function to remove the active item from the original position
+// Helper function to remove the active item from its original container
 function removeActiveItem(items: Item[], activePath: number[]) {
-  let currentLevel = items
+  let currentLevel = items;
 
-  // Navigate to the active item's level
+  // Navigate to the active item's container level
   for (let i = 0; i < activePath.length - 1; i++) {
-    currentLevel = currentLevel[activePath[i]].items || []
+    currentLevel = currentLevel[activePath[i]].items || [];
   }
 
-  // Remove the active item from its current level
-  currentLevel.splice(activePath[activePath.length - 1], 1)
-  return items
+  // Remove the active item from its current container level
+  currentLevel.splice(activePath[activePath.length - 1], 1);
+  return items;
+}
+
+// Helper function to insert the active item into the new position
+function insertItem(newItems: Item[], activeItem: Item, overPath: number[], overItem: Item) {
+  let targetLevel = newItems;
+
+  // Insert the item into the new container (or top level)
+  if (overItem.parentType === 'container') {
+    // Insert into a new container
+    for (let i = 0; i < overPath.length - 1; i++) {
+      targetLevel = targetLevel[overPath[i]].items!;
+    }
+    const overIndex = overPath[overPath.length - 1];
+    targetLevel.splice(overIndex, 0, activeItem);
+    console.log(`Inserted ${activeItem.id} into position ${overIndex} in the new container`);
+  } else {
+    // Insert into the top level
+    const overIndex = overPath[overPath.length - 1];
+    newItems.splice(overIndex, 0, activeItem);
+    console.log(`Moved ${activeItem.id} to the top level at position ${overIndex}`);
+  }
 }
 
 // Recursive search to find the item by id
