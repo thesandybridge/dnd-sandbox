@@ -6,6 +6,11 @@ import {
   DragOverlay,
   closestCenter,
   UniqueIdentifier,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
 } from '@dnd-kit/core'
 import TreeRenderer from './TreeRenderer'
 import { useAgenda } from '../providers/AgendaProvider'
@@ -34,6 +39,12 @@ const Agenda = () => {
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null)
   const [hoverZone, setHoverZone] = useState<string | null>(null)
   const [expandedMap, dispatchExpand] = useReducer(expandReducer, { '1': true, '4': true })
+
+  const sensors = useSensors(
+    useSensor(MouseSensor),
+    useSensor(TouchSensor),
+    useSensor(KeyboardSensor),
+  );
 
   const handleDragEnd = useCallback(() => {
     if (!activeId || !hoverZone) return
@@ -74,7 +85,12 @@ const Agenda = () => {
           + Objective
         </button>
       </div>
-      <DndContext {...dndConfig} onDragStart={e => setActiveId(e.active.id)} onDragEnd={handleDragEnd}>
+      <DndContext
+        {...dndConfig}
+        onDragStart={e => setActiveId(e.active.id)}
+        onDragEnd={handleDragEnd}
+        sensors={sensors}
+      >
         <TreeRenderer
           blocks={blocks}
           parentId={null}
