@@ -1,6 +1,6 @@
 'use client'
 
-import { memo, useReducer, useState } from "react"
+import { memo, useCallback, useReducer, useState } from "react"
 import {
   DndContext,
   DragOverlay,
@@ -35,12 +35,12 @@ const Agenda = () => {
   const [hoverZone, setHoverZone] = useState<string | null>(null)
   const [expandedMap, dispatchExpand] = useReducer(expandReducer, { '1': true, '4': true })
 
-  const handleDragEnd = () => {
+  const handleDragEnd = useCallback(() => {
     if (!activeId || !hoverZone) return
     moveItem(activeId, hoverZone);
     setActiveId(null)
     setHoverZone(null)
-  }
+  }, [activeId, hoverZone, moveItem])
 
   return (
     <div className="p-8 max-w-xl mx-auto">

@@ -4,7 +4,9 @@ import React, {
   createContext,
   useContext,
   useReducer,
-  ReactNode
+  ReactNode,
+  useMemo,
+  useCallback
 } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import type { UniqueIdentifier } from '@dnd-kit/core'
@@ -47,6 +49,7 @@ function agendaReducer(state: Agenda[], action: AgendaAction): Agenda[] {
 
 interface AgendaContextValue {
   blocks: Agenda[];
+  blockMap: Map<string, Agenda>
   createItem: (type: Agenda['type'], parentId?: string | null) => Agenda;
   deleteItem: (id: string) => void;
   moveItem: (activeId: UniqueIdentifier, hoverZone: string) => void;
@@ -57,28 +60,44 @@ const AgendaContext = createContext<AgendaContextValue | undefined>(undefined);
 
 export function AgendaProvider({ children }: { children: ReactNode }) {
   const [blocks, dispatch] = useReducer(agendaReducer, []);
-  console.log(blocks);
 
-  const createItem = (type: Agenda['type'], parentId: string | null = null) => {
+  const blockMap = useMemo(() => {
+    const map = new Map<string, Agenda>()
+    for (const block of blocks) {
+      map.set(block.id, block)
+    }
+    return map
+  }, [blocks])
+
+  const createItem = useCallback((type: Agenda['type'], parentId: string | null = null) => {
     const newItem: Agenda = { id: uuidv4(), type, parentId };
     dispatch({ type: 'ADD_ITEM', payload: newItem });
     return newItem;
-  };
+  }, []);
 
-  const deleteItem = (id: string) => {
+  const deleteItem = useCallback((id: string) => {
     dispatch({ type: 'DELETE_ITEM', payload: { id } });
-  };
+  }, []);
 
-  const moveItem = (activeId: UniqueIdentifier, hoverZone: string) => {
+  const moveItem = useCallback((activeId: UniqueIdentifier, hoverZone: string) => {
     dispatch({ type: 'MOVE_ITEM', payload: { activeId, hoverZone } });
-  };
+  }, []);
 
-  const setAll = (all: Agenda[]) => {
+  const setAll = useCallback((all: Agenda[]) => {
     dispatch({ type: 'SET_ALL', payload: all });
-  };
+  }, []);
+
+  const contextValue = useMemo(() => ({
+    blocks,
+    blockMap,
+    createItem,
+    deleteItem,
+    moveItem,
+    setAll
+  }), [blockMap, blocks, createItem, deleteItem, moveItem, setAll])
 
   return (
-    <AgendaContext.Provider value={{ blocks, createItem, deleteItem, moveItem, setAll }}>
+    <AgendaContext.Provider value={contextValue}>
       {children}
     </AgendaContext.Provider>
   );

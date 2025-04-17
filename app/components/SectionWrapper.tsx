@@ -1,5 +1,5 @@
 import { useDraggable } from "@dnd-kit/core";
-import { memo } from "react";
+import { memo, useCallback } from "react";
 import { Agenda } from "../page";
 import { useAgenda } from "../providers/AgendaProvider";
 
@@ -14,10 +14,10 @@ const SectionWrapper = ({ block }: Props) => {
         transform: `translate(${transform?.x ?? 0}px, ${transform?.y ?? 0}px)`,
     };
 
-    const handleDelete = (e: React.MouseEvent) => {
+    const handleDelete = useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
         deleteItem(block.id);
-    };
+    }, [block.id, deleteItem]);
 
     return (
         <div

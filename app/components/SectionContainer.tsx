@@ -50,7 +50,7 @@ const SectionContainer = ({
             {children.map(child => (
               <Fragment key={child.id}>
                 <DropZone id={`before-${child.id}`} onHover={onHover} />
-                <ItemWrapper block={child} />
+                <ItemWrapper id={child.id} />
                 <DropZone id={`after-${child.id}`} onHover={onHover} />
               </Fragment>
             ))}
