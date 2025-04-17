@@ -26,7 +26,7 @@ const DropZone = ({ id, onHover, parentId }: Props) => {
           onHover(zoneId, parentId)
         }
       }}
-      className={`h-1 rounded transition-colors ${isOver ? 'bg-blue-500' : 'bg-transparent'}`} />
+      className={`flex-none h-1 rounded transition-colors ${isOver ? 'bg-blue-500' : 'bg-transparent'}`} />
   )
 }
 

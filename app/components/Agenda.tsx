@@ -14,6 +14,7 @@ import {
 } from '@dnd-kit/core'
 import TreeRenderer from './TreeRenderer'
 import { useAgenda } from '../providers/AgendaProvider'
+import { useAgendaDetails } from "../hooks/useAgendaDetails"
 
 type ExpandAction = {
     type: 'TOGGLE';
@@ -36,6 +37,7 @@ const dndConfig = { collisionDetection: closestCenter }
 
 const Agenda = () => {
   const { blocks, createItem, moveItem } = useAgenda()
+  const { data: agendaData } = useAgendaDetails(blocks)
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null)
   const [hoverZone, setHoverZone] = useState<string | null>(null)
   const [expandedMap, dispatchExpand] = useReducer(expandReducer, { '1': true, '4': true })
@@ -93,6 +95,7 @@ const Agenda = () => {
       >
         <TreeRenderer
           blocks={blocks}
+          data={agendaData}
           parentId={null}
           onHover={handleHover}
           expandedMap={expandedMap}

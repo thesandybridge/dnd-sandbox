@@ -3,6 +3,7 @@ import SectionContainer from "./SectionContainer"
 import ItemWrapper from "./ItemWrapper"
 import DropZone from "./DropZone"
 import { Agenda } from "../page"
+import { BlockContent } from "../hooks/useAgendaDetails"
 
 export type ExpandAction = {
   type: 'TOGGLE'
@@ -15,6 +16,7 @@ export interface Props {
   dispatchExpand: Dispatch<ExpandAction>
   onHover: (zoneId: string, parentId: string | null) => void
   parentId: string | null
+  data?: Map<string, BlockContent>
 }
 
 const TreeRenderer = ({
@@ -22,7 +24,8 @@ const TreeRenderer = ({
   parentId,
   onHover,
   expandedMap,
-  dispatchExpand
+  dispatchExpand,
+  data,
 }: Props) => {
   const blocksByParent = useMemo(() => {
     const map = new Map<string | null, Agenda[]>()
@@ -34,7 +37,7 @@ const TreeRenderer = ({
   }, [blocks])
 
   const items = blocksByParent.get(parentId) ?? []
-  const indent = parentId ? 'ml-6 border-l border-gray-300 pl-4' : ''
+  const indent = parentId ? 'ml-6 border-l border-gray-300 pl-4' : 'flex flex-col gap-2'
 
   return (
     <div className={indent}>
@@ -55,9 +58,10 @@ const TreeRenderer = ({
                 expandedMap={expandedMap}
                 dispatchExpand={dispatchExpand}
                 onHover={onHover}
+                data={data}
               />
             ) : (
-                <ItemWrapper id={block.id} />
+                <ItemWrapper id={block.id} data={data} />
               )}
             <DropZone
               id={`after-${block.id}`}

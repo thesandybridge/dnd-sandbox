@@ -3,14 +3,17 @@ import { memo, useCallback } from "react";
 import Topic from "./Topic";
 import Objective from "./Objective";
 import { useAgenda } from "../providers/AgendaProvider";
+import { BlockContent } from "../hooks/useAgendaDetails";
 
 interface Props {
   id: string
+  data?: Map<string, BlockContent>
 }
 
-const ItemWrapper = ({ id }: Props) => {
+const ItemWrapper = ({ id, data }: Props) => {
   const { blockMap, deleteItem } = useAgenda();
   const block = blockMap.get(id)
+  const content = data?.get(id)
   const { attributes, listeners, setNodeRef, transform } = useDraggable({ id });
   const style = {
     transform: `translate(${transform?.x ?? 0}px, ${transform?.y ?? 0}px)`,
@@ -26,17 +29,20 @@ const ItemWrapper = ({ id }: Props) => {
   return (
     <div
       ref={setNodeRef}
-      {...listeners}
-      {...attributes}
       style={style}
-      className="relative"
+      className="flex gap-2 p-2 items-center space-between rounded-lg p-4 border border-gray-300"
     >
-      {block.type === "topic" && <Topic block={block} />}
-      {block.type === "objective" && <Objective block={block} />}
+      <div {...listeners} {...attributes} className="cursor-move px-1">
+        ☰ {/* drag handle icon */}
+      </div>
+
+      <div className="grow">
+        {block.type === "topic" && <Topic block={block} content={content} />}
+        {block.type === "objective" && <Objective block={block} content={content} />}
+      </div>
+
       <button
         onClick={handleDelete}
-        onPointerDown={e => e.stopPropagation()}
-        className="absolute top-0 right-0 p-1"
       >
         ×
       </button>

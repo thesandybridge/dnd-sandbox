@@ -13,7 +13,7 @@ interface Props {
   content?: BlockContent
 }
 
-const Topic = ({ block, content }: Props) => {
+const Section = ({ block, content }: Props) => {
   const queryClient = useQueryClient()
 
   const editor = useEditor({
@@ -31,7 +31,7 @@ const Topic = ({ block, content }: Props) => {
     ],
     editorProps: {
       attributes: {
-        class: 'focus:outline-none'
+        class: 'focus:outline-none px-2 py-1 border border-transparent rounded hover:border-gray-300 focus:border-blue-400 transition w-full text-lg font-semibold'
       }
     },
     onUpdate({ editor }) {
@@ -62,8 +62,10 @@ const Topic = ({ block, content }: Props) => {
   if (!editor) return null
 
   return (
-    <EditorContent editor={editor} />
+    <div className="grow flex items-center">
+      <EditorContent editor={editor} />
+    </div>
   )
 }
 
-export default memo(Topic)
+export default memo(Section)

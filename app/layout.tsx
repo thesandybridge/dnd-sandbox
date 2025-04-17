@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import QueryClientProvider from "@/app/providers/QueryClientProvider"
 import "./globals.css";
 import { ReactScan } from "./ReactScan";
 
@@ -28,7 +30,13 @@ export default function RootLayout({
     <html lang="en">
       <ReactScan />
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        {children}
+        <QueryClientProvider>
+          {children}
+          <ReactQueryDevtools
+            initialIsOpen={false}
+            buttonPosition="bottom-left"
+          />
+        </QueryClientProvider>
       </body>
     </html>
   );

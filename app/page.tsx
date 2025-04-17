@@ -4,7 +4,7 @@ import { AgendaProvider } from './providers/AgendaProvider'
 
 export interface Agenda {
   id: string,
-  type: string,
+  type: 'section' | 'topic' | 'objective',
   parentId: string | null
 }
 
