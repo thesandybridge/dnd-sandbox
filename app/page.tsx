@@ -1,481 +1,215 @@
 'use client'
-import { useState, useCallback } from 'react'
+
+import React, { useReducer, useState, useMemo, useCallback } from 'react'
 import {
   DndContext,
-  DragEndEvent,
-  DragStartEvent,
-  DragOverEvent,
   DragOverlay,
-  getFirstCollision,
-  UniqueIdentifier,
-  closestCorners,
-  closestCenter,
-  pointerWithin,
-  CollisionDetection,
-  KeyboardSensor,
-  MouseSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
+  useDraggable,
+  useDroppable,
+  closestCenter
 } from '@dnd-kit/core'
-import {
-  SortableContext,
-  useSortable,
-  verticalListSortingStrategy
-} from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
 
-type Item = {
-  id: string
-  type: 'item' | 'container'
-  parentType: 'root' | 'container'
-  items?: Item[]
-}
-
-const initialData: Item[] = [
-  { id: 'item-1', type: 'item', parentType: 'root' },
-  {
-    id: 'container-1', type: 'container', parentType: 'root', items: [
-      { id: 'item-2', type: 'item', parentType: 'container' },
-      { id: 'item-3', type: 'item', parentType: 'container' }
-    ]
-  },
-  {
-    id: 'container-2', type: 'container', parentType: 'root', items: [
-      { id: 'item-4', type: 'item', parentType: 'container' },
-      { id: 'item-5', type: 'item', parentType: 'container' }
-    ]
-  },
-  { id: 'item-6', type: 'item', parentType: 'root' }
+// Blueprint: flat list of blocks
+const initialBlocks = [
+  { id: '1', type: 'section', parentId: null },
+  { id: '2', type: 'topic', parentId: '1' },
+  { id: '3', type: 'topic', parentId: null },
+  { id: '4', type: 'section', parentId: null },
+  { id: '5', type: 'topic', parentId: '4' }
 ]
 
-export default function App() {
-  const [items, setItems] = useState<Item[]>(initialData)
-  const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null)
-  const [overId, setOverId] = useState<UniqueIdentifier | null>(null) // Store the item being hovered over
-  const [isOverTop, setIsOverTop] = useState(false)
-
-  const sensors = useSensors(
-    useSensor(MouseSensor),
-    useSensor(TouchSensor),
-    useSensor(KeyboardSensor),
-  );
-
-  const collisionDetectionStrategy: CollisionDetection = useCallback(
-    (args) => {
-      const { active, droppableContainers } = args;
-
-      // Step 1: Start by detecting collisions using `closestCenter` for all items (top-level and containers)
-      const centerIntersections = closestCenter(args);
-
-      let overId = getFirstCollision(centerIntersections, 'id');
-
-      if (overId) {
-        const overContainer = items.find(item => item.id === overId);
-
-        if (overContainer && overContainer.type === 'container' && overContainer.items?.length) {
-          // Step 2: We're over a container with items, so switch to `closestCorners` for items inside the container
-          const containerIntersections = closestCorners({
-            ...args,
-            droppableContainers: droppableContainers.filter(
-              (container) => overContainer.items?.includes(container.id)
-            ),
-          });
-
-          // Prioritize the closest item inside the container
-          const closestContainerItem = getFirstCollision(containerIntersections, 'id');
-
-          // Step 3: If the pointer is closer to an item in the container, use that
-          if (closestContainerItem) {
-            overId = closestContainerItem;
-          }
-        }
-
-        // Step 4: Detect if the pointer is moving out of the container and should be treated as moving back to the top-level
-        const pointerIntersections = pointerWithin(args);
-        const isPointerOutsideContainer = pointerIntersections.length > 0 && !overContainer?.items?.includes(overId);
-
-        if (isPointerOutsideContainer) {
-          // Move the item out of the container
-          overId = getFirstCollision(pointerIntersections, 'id');
-        }
-      }
-
-      // Return the `overId` for the closest item (inside a container or top-level)
-      return overId ? [{ id: overId }] : [];
-    },
-    [items]
-  );
-
-  const handleDragStart = (event: DragStartEvent) => {
-    setActiveId(event.active.id)
+// Reducer for expand/collapse
+function expandReducer(state, action) {
+  switch (action.type) {
+    case 'TOGGLE':
+      return { ...state, [action.id]: !state[action.id] }
+    default:
+      return state
   }
+}
 
-  const handleDragOver = (event: DragOverEvent) => {
-    const { over } = event
+// Utility to handle reparenting, disallow sections nesting via into-
+function reparentBlock(blocks, activeId, hoverZone) {
+    const dragged = blocks.find(b => b.id === activeId);
+    if (!dragged) return blocks;
+    const remaining = blocks.filter(b => b.id !== activeId);
 
-    // Helper function to check if an item (and its nested items) are in the list
-    const isSortableItem = (id: UniqueIdentifier, items: Item[]): boolean => {
-      return items.some(item =>
-        item.id === id || (item.items && isSortableItem(id, item.items))
-      )
+    let zone = hoverZone;
+
+    // ── DISALLOW ANY NESTING WHEN DRAGGING A SECTION ──
+    if (dragged.type === 'section') {
+        // transform 'into-' into 'before-'
+        if (zone.startsWith('into-')) {
+            zone = 'before-' + zone.slice('into-'.length);
+        }
+        // for before-/after- on nested items, point at the parent instead
+        if (zone.startsWith('before-') || zone.startsWith('after-')) {
+            const [, targetId] = zone.split('-', 2);
+            const target = blocks.find(b => b.id === targetId);
+            if (target && target.parentId !== null) {
+                const prefix = zone.split('-')[0];
+                zone = `${prefix}-${target.parentId}`;
+            }
+        }
     }
 
-    if (over && isSortableItem(over.id, items)) {  // Only process if `over` is a valid sortable item
-      setOverId(over.id)
+    // ── rest of your existing logic unchanged ──
 
-      const rect = over.rect
+    let newParentId = null;
+    let insertIndex = remaining.length;
 
-      if (rect) {
-        const midpoint = rect.top + rect.height / 2
-        const tolerance = rect.height * 0.15 // 15% tolerance for more flexibility
-
-        // Determine whether the pointer is above or below the midpoint
-        const pointerTop = event.active.rect.current.translated?.top
-
-        // Adding tolerance for top/bottom detection
-        if (pointerTop! < midpoint - tolerance) {
-          setIsOverTop(true) // Item is above the midpoint
-        } else if (pointerTop! > midpoint + tolerance) {
-          setIsOverTop(false) // Item is below the midpoint
+    if (zone.startsWith('into-')) {
+        newParentId = zone.replace('into-', '');
+        const siblings = remaining.filter(b => b.parentId === newParentId);
+        if (siblings.length > 0) {
+            const last = siblings[siblings.length - 1];
+            const idx = remaining.findIndex(b => b.id === last.id);
+            insertIndex = idx + 1;
         } else {
-          setIsOverTop(false) // Default to "below" when near the midpoint
+            const parentIdx = remaining.findIndex(b => b.id === newParentId);
+            insertIndex = parentIdx + 1;
         }
-      } else {
-        console.warn(`Rect for the over element with id ${over.id} not found`)
-      }
     } else {
-      // Clear the state if the hovered item is not in the sortable list
-      setOverId(null)
-      setIsOverTop(false)
+        const isAfter = zone.startsWith('after-');
+        const targetId = zone.replace(/^(before|after)-/, '');
+        const target = blocks.find(b => b.id === targetId);
+        newParentId = target?.parentId ?? null;
+        let idx = remaining.findIndex(b => b.id === targetId);
+        if (idx === -1) idx = remaining.length;
+        insertIndex = isAfter ? idx + 1 : idx;
     }
-  }
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event
-    if (!over) return
-
-    const newItems = moveItem(items, active.id, over.id)
-
-    setItems(newItems)
-    setActiveId(null)
-    setOverId(null)
-    setIsOverTop(false)
-  }
-
-  return (
-    <main>
-      <DndContext
-        collisionDetection={collisionDetectionStrategy}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-        onDragOver={handleDragOver}
-        sensors={sensors}
-      >
-        <SortableContext items={items.map(item => item.id)} strategy={verticalListSortingStrategy}>
-          <SortableItems items={items} overId={overId} isOverTop={isOverTop} />
-        </SortableContext>
-
-        <DragOverlay>
-          {activeId ? (
-            <div style={{
-              padding: '10px',
-              background: 'lightgray',
-              border: '1px solid #151515',
-              borderRadius: '5px',
-            }}>
-              Dragging {activeId}
-            </div>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
-    </main>
-  )
+    const moved = { ...dragged, parentId: newParentId };
+    return [
+        ...remaining.slice(0, insertIndex),
+        moved,
+        ...remaining.slice(insertIndex),
+    ];
 }
 
-function SortableItems({ items, overId, isOverTop }: { items: Item[], overId: UniqueIdentifier | null, isOverTop: boolean }) {
-  return (
-    <>
-      {items.map((item) => (
-        item.type === 'item'
-          ? <SortableItem key={item.id} id={item.id} isOver={item.id === overId} isOverTop={isOverTop} />
-          : <SortableContainer key={item.id} id={item.id} items={item.items || []} overId={overId} isOverTop={isOverTop} />
-      ))}
-    </>
-  )
+// DnD config
+const dndConfig = { collisionDetection: closestCenter }
+
+// Hook stub: section fetches own children
+function useSectionChildren(sectionId, blocks) {
+  return useMemo(() => blocks.filter(b => b.parentId === sectionId), [blocks, sectionId])
 }
 
-function Indicator() {
+// Topic wrapper
+function TopicItem({ block }) {
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({ id: block.id })
+  const style = { transform: `translate(${transform?.x ?? 0}px, ${transform?.y ?? 0}px)` }
   return (
     <div
-      style={{
-        height: '4px',
-        backgroundColor: 'blue',
-        transition: '0.2s',
-      }}
-    />
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      className="border border-gray-300 rounded-lg p-3 bg-white mb-2 shadow-sm"
+      style={style}
+    >
+      TOPIC {block.id}
+    </div>
   )
 }
 
-function SortableItem({ id, isOver, isOverTop }: { id: string, isOver: boolean, isOverTop: boolean }) {
-
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging
-  } = useSortable({ id })
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    padding: '10px',
-    border: '1px solid #ccc',
-    borderRadius: '5px',
-    cursor: isDragging ? 'grabbing' : 'grab',
-  }
-
+// Section header wrapper
+function SectionItem({ block }) {
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({ id: block.id })
+  const style = { transform: `translate(${transform?.x ?? 0}px, ${transform?.y ?? 0}px)` }
   return (
-    <>
-      {isOver && isOverTop && (
-        <Indicator />
-      )}
-      <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-        {id}
+    <div
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      className="flex-1 border border-gray-400 rounded px-2 py-1 bg-gray-100 cursor-move"
+      style={style}
+    >
+      SECTION {block.id}
+    </div>
+  )
+}
+
+// Ghost drop zone
+function DropZone({ id, onHover }) {
+  const { setNodeRef, isOver } = useDroppable({ id })
+  const handleHover = useCallback(() => onHover(id), [id, onHover])
+  React.useEffect(() => { if (isOver) handleHover() }, [isOver, handleHover])
+  return <div ref={setNodeRef} className={`h-4 my-1 rounded transition-colors ${isOver ? 'bg-blue-500' : 'bg-transparent'}`} />
+}
+
+// Section container component
+function SectionContainer({ block, expandedMap, dispatchExpand, onHover, blocks }) {
+  const children = useSectionChildren(block.id, blocks)
+  const isExpanded = !!expandedMap[block.id]
+  return (
+    <div className="mb-4 border border-gray-300 rounded-lg p-2 bg-gray-50">
+      <div className="flex items-center gap-2 mb-2">
+        <button onClick={() => dispatchExpand({ type: 'TOGGLE', id: block.id })} className="text-gray-600">
+          {isExpanded ? '▾' : '▸'}
+        </button>
+        <SectionItem block={block} />
       </div>
-      {isOver && !isOverTop && (
-        <Indicator />
+      {children.length === 0 && (
+        <DropZone id={`into-${block.id}`} onHover={onHover} />
       )}
-    </>
-  )
-}
-
-function SortableContainer({ id, items, overId, isOverTop }: { id: string, items: Item[], overId: UniqueIdentifier | null, isOverTop: boolean }) {
-
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging
-  } = useSortable({
-    id,
-  })
-
-  const [showFooter, setShowFooter] = useState(false)
-
-  const handleMouseEnter = () => {
-    setShowFooter(true);
-  }
-
-  const handleMouseLeave = () => {
-    setShowFooter(false);
-  }
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    padding: '10px',
-    border: '1px solid #888',
-    borderRadius: '5px',
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '1rem',
-    cursor: isDragging ? 'grabbing' : 'grab',
-  }
-
-  return (
-    <>
-      {id === overId && isOverTop && (
-        <Indicator />
-      )}
-      <div ref={setNodeRef} style={style} {...attributes} {...listeners} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-        <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>
-          {id} (Container)
+      {isExpanded && (
+        <div className="ml-6 mt-2 border-l border-gray-300 pl-4">
+          {children.map(child => (
+            <React.Fragment key={child.id}>
+              <DropZone id={`before-${child.id}`} onHover={onHover} />
+              <TopicItem block={child} />
+              <DropZone id={`after-${child.id}`} onHover={onHover} />
+            </React.Fragment>
+          ))}
         </div>
-        <SortableContext items={items.map(item => item.id)} strategy={verticalListSortingStrategy}>
-          <SortableItems items={items} overId={overId} isOverTop={isOverTop} />
-        </SortableContext>
-        {showFooter && (
-          <footer>
-            This is the footer of a container
-          </footer>
-        )}
-      </div>
-      {id === overId && !isOverTop && (
-        <Indicator />
       )}
-    </>
+    </div>
   )
 }
 
-function moveItem(items: Item[], activeId: UniqueIdentifier, overId: UniqueIdentifier): Item[] {
-  console.log(`Moving item ${activeId} over ${overId}`);
-
-  const activeResult = findItem(items, activeId);
-  const overResult = findItem(items, overId);
-
-  // Check if either result is undefined
-  if (!activeResult || !overResult) {
-    console.error('Active or Over item not found:', { activeResult, overResult });
-    return items;
-  }
-
-  const { activeItem, activePath } = activeResult;
-  const { activeItem: overItem, activePath: overPath } = overResult;
-
-  // Deep copy to avoid mutation
-  const newItems = structuredClone(items);
-
-  // Prevent moving containers inside other containers
-  if (activeItem.type === 'container' && overItem.parentType === 'container') {
-    console.log("Containers cannot be moved inside other containers");
-    return items;
-  }
-
-  if (overItem.type === 'container' && (!overItem.items || overItem.items.length === 0)) {
-    // Find the empty container in the newItems array
-    let targetLevel = newItems;
-    for (let i = 0; i < overPath.length - 1; i++) {
-      targetLevel = targetLevel[overPath[i]].items!;
-    }
-
-    const emptyContainer = targetLevel[overPath[overPath.length - 1]];
-
-    if (!emptyContainer.items) {
-      emptyContainer.items = [];
-    }
-
-    // Insert the active item into the empty container
-    emptyContainer.items.push(activeItem);
-
-    // Remove the active item from its original position
-    removeActiveItem(newItems, activePath);
-
-    console.log(`Moved ${activeItem.id} into empty container ${overItem.id}`);
-    return newItems;
-  }
-
-  // Check if the item is being moved between different containers or levels
-  const isSameLevel = isSameContainer(activePath, overPath);
-  const isMovingUpward = activePath[0] > overPath[0];
-
-  if (isSameLevel) {
-    // Reordering within the same container or level
-    let currentLevel = newItems;
-    for (let i = 0; i < activePath.length - 1; i++) {
-      currentLevel = currentLevel[activePath[i]].items!;
-    }
-
-    // Remove the active item from the current level
-    const activeIndex = activePath[activePath.length - 1];
-    const [movedItem] = currentLevel.splice(activeIndex, 1);
-
-    // Insert the item into the new position
-    const overIndex = overPath[overPath.length - 1];
-    currentLevel.splice(overIndex, 0, movedItem);
-
-    console.log(`Moved ${activeItem.id} within the same container or level from index ${activeIndex} to ${overIndex}`);
-  } else {
-    // Handle moving between different containers or from container to top level
-    if (overPath.length === 1) {
-      // Moving to the top level
-      if (isMovingUpward && activePath[0] > overPath[0]) {
-        // Moving upward out of a container to a position before the container
-        insertItem(newItems, activeItem, overPath);
-        removeActiveItem(newItems, activePath);
-      } else {
-        // Moving downward or to a position after the container
-        removeActiveItem(newItems, activePath);
-        insertItem(newItems, activeItem, overPath);
-      }
-    } else {
-      // Moving between containers (not top level)
-      if (isMovingUpward) {
-        // Remove first if moving upward to prevent shift issues
-        removeActiveItem(newItems, activePath);
-        insertItem(newItems, activeItem, overPath);
-      } else {
-        // Moving downward, insert first then remove
-        insertItem(newItems, activeItem, overPath);
-        removeActiveItem(newItems, activePath);
-      }
-    }
-  }
-
-  return newItems;
+// Recursive tree
+function TreeRenderer({ blocks, parentId, onHover, expandedMap, dispatchExpand }) {
+  const items = useMemo(() => blocks.filter(b => b.parentId === parentId), [blocks, parentId])
+  const indent = parentId ? 'ml-6 border-l border-gray-300 pl-4' : ''
+  return (
+    <div className={indent}>
+      {items.map(block => (
+        <React.Fragment key={block.id}>
+          <DropZone id={`before-${block.id}`} onHover={onHover} />
+          {block.type === 'section' ? (
+            <SectionContainer block={block} expandedMap={expandedMap} dispatchExpand={dispatchExpand} onHover={onHover} blocks={blocks} />
+          ) : (
+            <TopicItem block={block} />
+          )}
+          <DropZone id={`after-${block.id}`} onHover={onHover} />
+        </React.Fragment>
+      ))}
+    </div>
+  )
 }
 
-// Helper function to check if two paths are in the same container
-function isSameContainer(activePath: number[], overPath: number[]): boolean {
-  return JSON.stringify(activePath.slice(0, -1)) === JSON.stringify(overPath.slice(0, -1));
-}
+// Main agenda demo
+export default function AgendaDemo() {
+  const [blocks, setBlocks] = useState(initialBlocks)
+  const [activeId, setActiveId] = useState(null)
+  const [hoverZone, setHoverZone] = useState(null)
+  const [expandedMap, dispatchExpand] = useReducer(expandReducer, { '1': true, '4': true })
 
-// Helper function to remove the active item from the original container
-function removeActiveItem(items: Item[], activePath: number[]) {
-  let currentLevel = items;
-
-  // Navigate to the active item's container level
-  for (let i = 0; i < activePath.length - 1; i++) {
-    currentLevel = currentLevel[activePath[i]].items || [];
+  const handleDragEnd = () => {
+    if (!activeId || !hoverZone) return
+    setBlocks(prev => reparentBlock(prev, activeId, hoverZone))
+    setActiveId(null)
+    setHoverZone(null)
   }
 
-  // Remove the active item from its current container level
-  currentLevel.splice(activePath[activePath.length - 1], 1);
-  console.log(`Removed item from original container`);
-  return items;
+  return (
+    <div className="p-8 max-w-xl mx-auto">
+      <h1 className="text-2xl font-semibold mb-6">Agenda DnD Demo</h1>
+      <DndContext {...dndConfig} onDragStart={e => setActiveId(e.active.id)} onDragEnd={handleDragEnd}>
+        <TreeRenderer blocks={blocks} parentId={null} onHover={setHoverZone} expandedMap={expandedMap} dispatchExpand={dispatchExpand} />
+        <DragOverlay>{activeId && <div className="bg-gray-200 p-2 rounded">Dragging {activeId}</div>}</DragOverlay>
+      </DndContext>
+    </div>
+  )
 }
 
-// Helper function to insert the active item into the new position
-function insertItem(newItems: Item[], activeItem: Item, overPath: number[]) {
-  let targetLevel = newItems;
-
-  // Insert the item into the new container (or top level)
-  for (let i = 0; i < overPath.length - 1; i++) {
-    targetLevel = targetLevel[overPath[i]].items!;
-  }
-
-  const overIndex = overPath[overPath.length - 1];
-  targetLevel.splice(overIndex, 0, activeItem);
-  console.log(`Inserted ${activeItem.id} into position ${overIndex} in the new container`);
-}
-
-// Recursive search to find the item by id
-function findItem(
-  items: Item[],
-  id: UniqueIdentifier
-): { activeItem: Item; activePath: number[] } | undefined {
-  let path: number[] | null = null
-  let foundItem: Item | null = null
-
-  function search(items: Item[], currentPath: number[]) {
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i]
-
-      if (item.id === id) {
-        path = [...currentPath, i]
-        foundItem = item
-        return
-      }
-
-      if (item.type === 'container' && item.items) {
-        search(item.items, [...currentPath, i])
-
-        // If the item was found in the recursive search, exit the loop
-        if (foundItem) return
-      }
-    }
-  }
-
-  search(items, [])
-
-  // Return undefined if no item was found
-  if (!foundItem || !path) {
-    return undefined
-  }
-
-  return { activeItem: foundItem, activePath: path }
-}
