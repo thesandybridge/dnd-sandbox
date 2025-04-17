@@ -4,6 +4,7 @@ import ItemWrapper from "./ItemWrapper"
 import DropZone from "./DropZone"
 import { Agenda } from "../page"
 import { Dispatch } from "react"
+import { useAgenda } from "../providers/AgendaProvider"
 
 function useSectionChildren(sectionId: string, blocks: Agenda[]) {
   return useMemo(() => blocks.filter(b => b.parentId === sectionId), [blocks, sectionId])
@@ -29,6 +30,7 @@ const SectionContainer = ({
   onHover,
   blocks,
 }: Props) => {
+  const { createItem } = useAgenda()
   const children = useSectionChildren(block.id, blocks)
   const isExpanded = !!expandedMap[block.id]
   return (
@@ -53,8 +55,19 @@ const SectionContainer = ({
               </Fragment>
             ))}
           </div>
-          <div className="flex items-center justify-center p-2">
-            Add Item
+          <div className="flex p-4 gap-2">
+            <div
+              className="flex items-center justify-center p-2"
+              onClick={() => createItem('topic', block.id)}
+            >
+              + Add Topic
+            </div>
+            <div
+              className="flex items-center justify-center p-2"
+              onClick={() => createItem('objective', block.id)}
+            >
+              + Add Objective
+            </div>
           </div>
         </>
       )}

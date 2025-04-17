@@ -1,34 +1,45 @@
-import { useDraggable } from "@dnd-kit/core"
-import { memo } from "react"
-import { Agenda } from "../page"
-import Topic from "./Topic"
-import Objective from "./Objective"
+import { useDraggable } from "@dnd-kit/core";
+import { memo } from "react";
+import { Agenda } from "../page";
+import Topic from "./Topic";
+import Objective from "./Objective";
+import { useAgenda } from "../providers/AgendaProvider";
 
 interface Props {
-  block: Agenda
+    block: Agenda;
 }
 
 const ItemWrapper = ({ block }: Props) => {
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({ id: block.id })
-  const style = { transform: `translate(${transform?.x ?? 0}px, ${transform?.y ?? 0}px)` }
+    const { deleteItem } = useAgenda();
+    const { attributes, listeners, setNodeRef, transform } = useDraggable({ id: block.id });
+    const style = {
+        transform: `translate(${transform?.x ?? 0}px, ${transform?.y ?? 0}px)`,
+    };
 
-  if (!block) return null
+    const handleDelete = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        deleteItem(block.id);
+    };
 
-  return (
-    <div
-      ref={setNodeRef}
-      {...listeners}
-      {...attributes}
-      style={style}
-    >
-      {block.type === 'topic' && (
-        <Topic block={block}/>
-      )}
-      {block.type === 'objective' && (
-        <Objective block={block} />
-      )}
-    </div>
-  )
-}
+    return (
+        <div
+            ref={setNodeRef}
+            {...listeners}
+            {...attributes}
+            style={style}
+            className="relative"
+        >
+            {block.type === "topic" && <Topic block={block} />}
+            {block.type === "objective" && <Objective block={block} />}
+            <button
+                onClick={handleDelete}
+                onPointerDown={e => e.stopPropagation()}
+                className="absolute top-0 right-0 p-1"
+            >
+                ×
+            </button>
+        </div>
+    );
+};
 
-export default memo(ItemWrapper)
+export default memo(ItemWrapper);
