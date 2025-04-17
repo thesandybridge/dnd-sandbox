@@ -43,15 +43,20 @@ const SectionContainer = ({
         <DropZone id={`into-${block.id}`} onHover={onHover} />
       )}
       {isExpanded && (
-        <div className="ml-6 mt-2 border-l border-gray-300 pl-4">
-          {children.map(child => (
-            <Fragment key={child.id}>
-              <DropZone id={`before-${child.id}`} onHover={onHover} />
-              <ItemWrapper block={child} />
-              <DropZone id={`after-${child.id}`} onHover={onHover} />
-            </Fragment>
-          ))}
-        </div>
+        <>
+          <div className="ml-6 mt-2 border-l border-gray-300 pl-4">
+            {children.map(child => (
+              <Fragment key={child.id}>
+                <DropZone id={`before-${child.id}`} onHover={onHover} />
+                <ItemWrapper block={child} />
+                <DropZone id={`after-${child.id}`} onHover={onHover} />
+              </Fragment>
+            ))}
+          </div>
+          <div className="flex items-center justify-center p-2">
+            Add Item
+          </div>
+        </>
       )}
     </div>
   )

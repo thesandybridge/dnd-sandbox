@@ -20,7 +20,8 @@ const initialBlocks: Agenda[] = [
   { id: '2', type: 'topic', parentId: '1' },
   { id: '3', type: 'topic', parentId: null },
   { id: '4', type: 'section', parentId: null },
-  { id: '5', type: 'topic', parentId: '4' }
+  { id: '5', type: 'topic', parentId: '4' },
+  { id: '6', type: 'objective', parentId: null }
 ]
 
 type ExpandAction = {
