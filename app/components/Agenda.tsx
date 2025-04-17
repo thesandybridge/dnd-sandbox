@@ -42,6 +42,15 @@ const Agenda = () => {
     setHoverZone(null)
   }, [activeId, hoverZone, moveItem])
 
+  const handleHover = useCallback((zoneId: string, parentId: string | null) => {
+    const dragged = blocks.find(b => b.id === activeId)
+    if (!dragged) return
+
+    if (dragged.type === 'section' && parentId) return
+
+    setHoverZone(zoneId)
+  }, [activeId, blocks])
+
   return (
     <div className="p-8 max-w-xl mx-auto">
       <h1 className="text-2xl font-semibold mb-6">Agenda DnD Demo</h1>
@@ -69,7 +78,7 @@ const Agenda = () => {
         <TreeRenderer
           blocks={blocks}
           parentId={null}
-          onHover={setHoverZone}
+          onHover={handleHover}
           expandedMap={expandedMap}
           dispatchExpand={dispatchExpand}
         />

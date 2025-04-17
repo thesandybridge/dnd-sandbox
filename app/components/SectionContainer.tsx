@@ -20,7 +20,7 @@ export interface Props {
     blocks: Agenda[];
     expandedMap: Record<string, boolean>;
     dispatchExpand: Dispatch<ExpandAction>;
-    onHover: (zoneId: string) => void;
+    onHover: (zoneId: string, parentId: string | null) => void;
 }
 
 const SectionContainer = ({
@@ -42,16 +42,28 @@ const SectionContainer = ({
         <SectionWrapper block={block} />
       </div>
       {children.length === 0 && (
-        <DropZone id={`into-${block.id}`} onHover={onHover} />
+        <DropZone
+          id={`into-${block.id}`}
+          onHover={onHover}
+          parentId={block.parentId}
+        />
       )}
       {isExpanded && (
         <>
           <div className="ml-6 mt-2 border-l border-gray-300 pl-4">
             {children.map(child => (
               <Fragment key={child.id}>
-                <DropZone id={`before-${child.id}`} onHover={onHover} />
+                <DropZone
+                  id={`before-${child.id}`}
+                  onHover={onHover}
+                  parentId={child.parentId}
+                />
                 <ItemWrapper id={child.id} />
-                <DropZone id={`after-${child.id}`} onHover={onHover} />
+                <DropZone
+                  id={`after-${child.id}`}
+                  onHover={onHover}
+                  parentId={child.parentId}
+                />
               </Fragment>
             ))}
           </div>

@@ -13,7 +13,7 @@ export interface Props {
   blocks: Agenda[]
   expandedMap: Record<string, boolean>
   dispatchExpand: Dispatch<ExpandAction>
-  onHover: (zoneId: string) => void
+  onHover: (zoneId: string, parentId: string | null) => void
   parentId: string | null
 }
 
@@ -43,7 +43,11 @@ const TreeRenderer = ({
 
         return (
           <Fragment key={block.id}>
-            <DropZone id={`before-${block.id}`} onHover={onHover} />
+            <DropZone
+              id={`before-${block.id}`}
+              onHover={onHover}
+              parentId={block.parentId}
+            />
             {block.type === 'section' ? (
               <SectionContainer
                 block={block}
@@ -55,7 +59,11 @@ const TreeRenderer = ({
             ) : (
                 <ItemWrapper id={block.id} />
               )}
-            <DropZone id={`after-${block.id}`} onHover={onHover} />
+            <DropZone
+              id={`after-${block.id}`}
+              onHover={onHover}
+              parentId={block.parentId}
+            />
           </Fragment>
         )
       })}
