@@ -7,10 +7,11 @@ import { useQueryClient } from '@tanstack/react-query'
 
 import { Agenda } from '../page'
 import { BlockContent } from '../hooks/useAgendaDetails'
+import { SectionContent } from '../hooks/useAgendaDetails'
 
 interface Props {
   block: Agenda
-  content?: BlockContent
+  content?: SectionContent
 }
 
 const Section = ({ block, content }: Props) => {
@@ -34,6 +35,7 @@ const Section = ({ block, content }: Props) => {
         class: 'focus:outline-none px-2 py-1 border border-transparent rounded hover:border-gray-300 focus:border-blue-400 transition w-full text-lg font-semibold'
       }
     },
+    immediatelyRender: false,
     onUpdate({ editor }) {
       queryClient.setQueryData<Map<string, BlockContent>>(['agenda-details'], (old) => {
         const map = new Map(old ?? [])

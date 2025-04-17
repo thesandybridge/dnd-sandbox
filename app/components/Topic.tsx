@@ -6,11 +6,11 @@ import StarterKit from '@tiptap/starter-kit'
 import { useQueryClient } from '@tanstack/react-query'
 
 import { Agenda } from '../page'
-import { BlockContent } from '../hooks/useAgendaDetails'
+import { BlockContent, TopicContent } from '../hooks/useAgendaDetails'
 
 interface Props {
   block: Agenda
-  content?: BlockContent
+  content?: TopicContent
 }
 
 const Topic = ({ block, content }: Props) => {
@@ -34,6 +34,7 @@ const Topic = ({ block, content }: Props) => {
         class: 'focus:outline-none'
       }
     },
+    immediatelyRender: false,
     onUpdate({ editor }) {
       queryClient.setQueryData<Map<string, BlockContent>>(['agenda-details'], (old) => {
         const map = new Map(old ?? [])

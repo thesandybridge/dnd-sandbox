@@ -1,10 +1,25 @@
 import { useQuery } from '@tanstack/react-query'
 import { Agenda } from '../page'
 
-export type BlockContent = {
+export type SectionContent = {
+  type: 'section'
   title: string
-  content: string // tiptap JSON or markdown
+  summary: string
 }
+
+export type TopicContent = {
+  type: 'topic'
+  title: string
+  description: string
+}
+
+export type ObjectiveContent = {
+  type: 'objective'
+  title: string
+  progress: number
+}
+
+export type BlockContent = SectionContent | TopicContent | ObjectiveContent
 
 const mockContentStore = new Map<string, BlockContent>()
 
@@ -12,20 +27,40 @@ export const useAgendaDetails = (blocks: Agenda[]) => {
   return useQuery({
     queryKey: ['agenda-details'],
     queryFn: async () => {
-      // simulate fetch delay
       await new Promise(res => setTimeout(res, 100))
+
       const map = new Map<string, BlockContent>()
+
       for (const b of blocks) {
-        const existing = mockContentStore.get(b.id)
+        let existing = mockContentStore.get(b.id)
+
         if (!existing) {
-          const mock: BlockContent = {
-            title: `${b.type.toUpperCase()} ${b.id.slice(0, 4)}`,
-            content: ''
+          if (b.type === 'section') {
+            existing = {
+              type: 'section',
+              title: `SECTION ${b.id.slice(0, 4)}`,
+              summary: ''
+            }
+          } else if (b.type === 'topic') {
+            existing = {
+              type: 'topic',
+              title: `TOPIC ${b.id.slice(0, 4)}`,
+              description: ''
+            }
+          } else if (b.type === 'objective') {
+            existing = {
+              type: 'objective',
+              title: `OBJECTIVE ${b.id.slice(0, 4)}`,
+              progress: 0
+            }
           }
-          mockContentStore.set(b.id, mock)
+
+          mockContentStore.set(b.id, existing!)
         }
-        map.set(b.id, mockContentStore.get(b.id)!)
+
+        map.set(b.id, existing!)
       }
+
       return map
     },
     staleTime: Infinity
