@@ -63,7 +63,7 @@ const SectionContainer = ({
             {isExpanded ? '▾' : '▸'}
           </button>
         </div>
-        <Section block={block} content={content} />
+        {content?.type === 'section' && <Section block={block} content={content} />}
         <button
           onClick={handleDelete}
           className="p-1 text-red-600"

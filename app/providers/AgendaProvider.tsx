@@ -79,10 +79,36 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
     // Update agenda details cache if it's a content block
     queryClient.setQueryData<Map<string, BlockContent>>(['agenda-details'], (old) => {
       const map = new Map(old ?? [])
-      map.set(newItem.id, {
-        title: `${newItem.type.toUpperCase()} ${newItem.id.slice(0, 4)}`,
-        content: ''
-      })
+
+      let content: BlockContent
+
+      switch (newItem.type) {
+        case 'section':
+          content = {
+            type: 'section',
+            title: `SECTION ${newItem.id.slice(0, 4)}`,
+            summary: ''
+          }
+          break
+
+        case 'topic':
+          content = {
+            type: 'topic',
+            title: `TOPIC ${newItem.id.slice(0, 4)}`,
+            description: ''
+          }
+          break
+
+        case 'objective':
+          content = {
+            type: 'objective',
+            title: `OBJECTIVE ${newItem.id.slice(0, 4)}`,
+            progress: 0
+          }
+          break
+      }
+
+      map.set(newItem.id, content)
       return map
     })
 

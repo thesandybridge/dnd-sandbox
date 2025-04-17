@@ -37,8 +37,8 @@ const ItemWrapper = ({ id, data }: Props) => {
       </div>
 
       <div className="grow">
-        {block.type === "topic" && <Topic block={block} content={content} />}
-        {block.type === "objective" && <Objective block={block} content={content} />}
+        {content?.type === "topic" && <Topic block={block} content={content} />}
+        {content?.type === "objective" && <Objective block={block} content={content} />}
       </div>
 
       <button
