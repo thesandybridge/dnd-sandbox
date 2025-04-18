@@ -11,30 +11,13 @@ import {
   TouchSensor,
   useSensor,
   useSensors,
+  DragStartEvent,
 } from '@dnd-kit/core'
 import TreeRenderer from './TreeRenderer'
 import { useAgenda } from '../providers/AgendaProvider'
 import { useAgendaDetails } from "../hooks/useAgendaDetails"
 import { useModifierKey } from "../hooks/useModifierKey"
-import { DragStartEvent } from "@dnd-kit/core"
-
-type ExpandAction =
-  | { type: 'TOGGLE'; id: string }
-  | { type: 'SET_ALL'; map: Record<string, boolean> }
-
-function expandReducer(
-  state: Record<string, boolean>,
-  action: ExpandAction
-): Record<string, boolean> {
-  switch (action.type) {
-    case 'TOGGLE':
-      return { ...state, [action.id]: !state[action.id] }
-    case 'SET_ALL':
-      return action.map
-    default:
-      return state
-  }
-}
+import expandReducer from "../reducers/expandReducer"
 
 const dndConfig = { collisionDetection: closestCenter }
 
@@ -44,6 +27,13 @@ const Agenda = () => {
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null)
   const [hoverZone, setHoverZone] = useState<string | null>(null)
   const [expandedMap, dispatchExpand] = useReducer(expandReducer, { '1': true, '4': true })
+
+  const activeBlock = useMemo(
+    () => blocks.find(b => b.id === activeId),
+    [activeId, blocks]
+  )
+
+  const content = activeBlock ? agendaData?.get(activeBlock.id) : null
 
   const {
     pressed: isShiftHeld,
@@ -68,11 +58,11 @@ const Agenda = () => {
     useSensor(MouseSensor),
     useSensor(TouchSensor),
     useSensor(KeyboardSensor),
-  );
+  )
 
   const handleDragEnd = useCallback(() => {
     if (!activeId || !hoverZone) return
-    moveItem(activeId, hoverZone);
+    moveItem(activeId, hoverZone)
     setActiveId(null)
     setHoverZone(null)
   }, [activeId, hoverZone, moveItem])
@@ -125,7 +115,39 @@ const Agenda = () => {
           dispatchExpand={dispatchExpand}
           hoverZone={hoverZone}
         />
-        <DragOverlay>{activeId && <div className="bg-gray-200 p-2 rounded">Dragging {activeId}</div>}</DragOverlay>
+
+        <DragOverlay>
+          {activeBlock && (
+            activeBlock.type === 'section' ? (
+              <div className="bg-white border border-gray-300 shadow-md rounded-md p-3 text-sm w-64 pointer-events-none">
+                <div className="text-gray-500 uppercase text-xs tracking-wide mb-1">
+                  Section
+                </div>
+                <div className="font-semibold text-gray-800 mb-2">
+                  {content?.title ?? 'Untitled Section'}
+                </div>
+                <ul className="pl-4 list-disc text-gray-600 text-xs space-y-1">
+                  {blocks
+                    .filter(b => b.parentId === activeBlock.id)
+                    .map(child => (
+                      <li key={child.id}>
+                        {agendaData?.get(child.id)?.title ?? `Untitled ${child.type}`}
+                      </li>
+                    ))}
+                </ul>
+              </div>
+            ) : (
+                <div className="bg-white border border-gray-300 shadow-md rounded-md px-4 py-2 text-sm max-w-sm pointer-events-none">
+                  <div className="text-gray-500 uppercase text-xs tracking-wide mb-1">
+                    {activeBlock.type}
+                  </div>
+                  <div className="font-medium text-gray-800">
+                    {content?.title ?? `Untitled ${activeBlock.type}`}
+                  </div>
+                </div>
+              )
+          )}
+        </DragOverlay>
       </DndContext>
     </div>
   )

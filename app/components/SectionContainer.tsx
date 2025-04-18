@@ -39,7 +39,13 @@ const SectionContainer = ({
   const { createItem, deleteItem } = useAgenda()
   const children = useSectionChildren(block.id, blocks)
   const isExpanded = !!expandedMap[block.id]
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({ id: block.id });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    isDragging,
+  } = useDraggable({ id: block.id });
   const content = data?.get(block.id)
   const isHoveredOverThis = useMemo(() => {
     if (!hoverZone) return false
@@ -67,6 +73,7 @@ const SectionContainer = ({
     <div
       ref={setNodeRef}
       style={style}
+      className={`transition-opacity ${isDragging ? 'opacity-0' : 'opacity-100'}`}
     >
       <div className="flex items-center gap-2 justify-between bg-gray-50 rounded-lg p-2">
         <div className="flex gap-2 align-center justify-center">

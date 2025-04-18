@@ -18,7 +18,7 @@ interface Props {
 const Objective = ({ block, content }: Props) => {
   const queryClient = useQueryClient()
   const { deleteItem } = useAgenda()
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: block.id
   });
   const style = {
@@ -80,7 +80,7 @@ const Objective = ({ block, content }: Props) => {
     <div
       ref={setNodeRef}
       style={style}
-      className="flex gap-2 p-2 items-center space-between rounded-lg p-4 border border-gray-300"
+      className={`transition-opacity ${isDragging ? 'opacity-0' : 'opacity-100'} flex gap-2 p-2 items-center space-between rounded-lg p-4 border border-gray-300`}
     >
       <div {...listeners} {...attributes} className="cursor-move px-1">
         ☰ {/* drag handle icon */}
