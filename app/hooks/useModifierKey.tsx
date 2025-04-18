@@ -1,28 +1,36 @@
-import { useEffect, useRef, useState, JSX } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
-export function useModifierKey(
-  modifierKey: 'Shift' | 'Meta' | 'Control' | 'Alt' = 'Shift'
-): {
-  pressed: boolean
-  pressedRef: React.MutableRefObject<boolean>
-  DisplayKey: () => JSX.Element
-} {
+const ALL_MODIFIERS = ['Shift', 'Meta', 'Control', 'Alt'] as const
+type ModifierKey = typeof ALL_MODIFIERS[number]
+
+/**
+ * Tracks exclusive modifier key press (e.g. Shift but not Shift+Ctrl).
+ * Returns boolean state, ref, and a styled <kbd> component.
+ */
+export function useModifierKey(modifierKey: ModifierKey) {
   const [pressed, setPressed] = useState(false)
   const pressedRef = useRef(false)
 
+  const otherModifiers = ALL_MODIFIERS.filter(k => k !== modifierKey)
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.getModifierState(modifierKey)) {
+      const isOnlyPressed =
+        e.getModifierState(modifierKey) &&
+        otherModifiers.every(mod => !e.getModifierState(mod))
+
+      if (isOnlyPressed) {
         pressedRef.current = true
         setPressed(true)
-      }
-    }
-
-    const handleKeyUp = (e: KeyboardEvent) => {
-      if (!e.getModifierState(modifierKey)) {
+      } else {
         pressedRef.current = false
         setPressed(false)
       }
+    }
+
+    const handleKeyUp = () => {
+      pressedRef.current = false
+      setPressed(false)
     }
 
     window.addEventListener('keydown', handleKeyDown)
@@ -32,10 +40,10 @@ export function useModifierKey(
       window.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('keyup', handleKeyUp)
     }
-  }, [modifierKey])
+  }, [modifierKey, otherModifiers])
 
   const DisplayKey = () => (
-    <kbd className="p-1 border rounded text-sm bg-gray-100 text-gray-800 border-gray-300 shadow-inner">
+    <kbd className="px-1.5 py-0.5 border rounded text-sm bg-gray-100 text-gray-800 border-gray-300 shadow-inner">
       {modifierKey === 'Meta' ? '⌘' : modifierKey}
     </kbd>
   )

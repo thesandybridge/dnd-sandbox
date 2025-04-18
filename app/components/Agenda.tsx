@@ -17,6 +17,7 @@ import { useAgenda } from '../providers/AgendaProvider'
 import { useAgendaDetails } from "../hooks/useAgendaDetails"
 import { useModifierKey } from "../hooks/useModifierKey"
 import { DragStartEvent } from "@dnd-kit/core"
+import { useDebouncedEffect } from "../hooks/useDebouncedEffect"
 
 type ExpandAction =
   | { type: 'TOGGLE'; id: string }
@@ -36,6 +37,20 @@ function expandReducer(
   }
 }
 
+function areMapsEqual(
+  a: Record<string, boolean>,
+  b: Record<string, boolean>
+): boolean {
+  const aKeys = Object.keys(a)
+  const bKeys = Object.keys(b)
+
+  if (aKeys.length !== bKeys.length) return false
+  for (const key of aKeys) {
+    if (a[key] !== b[key]) return false
+  }
+  return true
+}
+
 const dndConfig = { collisionDetection: closestCenter }
 
 const Agenda = () => {
@@ -46,23 +61,26 @@ const Agenda = () => {
   const [expandedMap, dispatchExpand] = useReducer(expandReducer, { '1': true, '4': true })
   const {
     pressed: isShiftHeld,
-    pressedRef: shiftKeyRef,
     DisplayKey,
   } = useModifierKey('Shift')
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id)
-
-    if (shiftKeyRef.current) {
-      setTimeout(() => {
-        const collapsed: Record<string, boolean> = {}
-        blocks.forEach(b => {
-          if (b.type === 'section') collapsed[b.id] = false
-        })
-        dispatchExpand({ type: 'SET_ALL', map: collapsed })
-      }, 100) // just enough to stabilize drag overlay
-    }
   }
+
+  useDebouncedEffect(() => {
+    const map: Record<string, boolean> = {}
+
+    blocks.forEach(b => {
+      if (b.type === 'section') {
+        map[b.id] = !isShiftHeld
+      }
+    })
+
+    if (!areMapsEqual(map, expandedMap)) {
+      dispatchExpand({ type: 'SET_ALL', map })
+    }
+  }, [isShiftHeld, blocks, expandedMap], 150)
 
   const sensors = useSensors(
     useSensor(MouseSensor),
