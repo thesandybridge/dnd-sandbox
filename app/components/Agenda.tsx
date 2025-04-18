@@ -17,13 +17,13 @@ import { useAgenda } from '../providers/AgendaProvider'
 import { useAgendaDetails } from "../hooks/useAgendaDetails"
 
 type ExpandAction = {
-    type: 'TOGGLE';
-    id: string;
+  type: 'TOGGLE';
+  id: string;
 };
 
 function expandReducer(
-    state: Record<string, boolean>,
-    action: ExpandAction
+  state: Record<string, boolean>,
+  action: ExpandAction
 ): Record<string, boolean> {
   switch (action.type) {
     case 'TOGGLE':
