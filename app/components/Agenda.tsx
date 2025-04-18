@@ -1,6 +1,6 @@
 'use client'
 
-import { memo, useCallback, useReducer, useState } from "react"
+import { memo, useCallback, useReducer, useState, useMemo } from "react"
 import {
   DndContext,
   DragOverlay,
@@ -17,7 +17,6 @@ import { useAgenda } from '../providers/AgendaProvider'
 import { useAgendaDetails } from "../hooks/useAgendaDetails"
 import { useModifierKey } from "../hooks/useModifierKey"
 import { DragStartEvent } from "@dnd-kit/core"
-import { useDebouncedEffect } from "../hooks/useDebouncedEffect"
 
 type ExpandAction =
   | { type: 'TOGGLE'; id: string }
@@ -37,20 +36,6 @@ function expandReducer(
   }
 }
 
-function areMapsEqual(
-  a: Record<string, boolean>,
-  b: Record<string, boolean>
-): boolean {
-  const aKeys = Object.keys(a)
-  const bKeys = Object.keys(b)
-
-  if (aKeys.length !== bKeys.length) return false
-  for (const key of aKeys) {
-    if (a[key] !== b[key]) return false
-  }
-  return true
-}
-
 const dndConfig = { collisionDetection: closestCenter }
 
 const Agenda = () => {
@@ -59,6 +44,7 @@ const Agenda = () => {
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null)
   const [hoverZone, setHoverZone] = useState<string | null>(null)
   const [expandedMap, dispatchExpand] = useReducer(expandReducer, { '1': true, '4': true })
+
   const {
     pressed: isShiftHeld,
     DisplayKey,
@@ -68,19 +54,15 @@ const Agenda = () => {
     setActiveId(event.active.id)
   }
 
-  useDebouncedEffect(() => {
-    const map: Record<string, boolean> = {}
+  const effectiveExpandedMap = useMemo(() => {
+    if (!isShiftHeld) return expandedMap
 
+    const collapsed: Record<string, boolean> = {}
     blocks.forEach(b => {
-      if (b.type === 'section') {
-        map[b.id] = !isShiftHeld
-      }
+      if (b.type === 'section') collapsed[b.id] = false
     })
-
-    if (!areMapsEqual(map, expandedMap)) {
-      dispatchExpand({ type: 'SET_ALL', map })
-    }
-  }, [isShiftHeld, blocks, expandedMap], 150)
+    return collapsed
+  }, [isShiftHeld, expandedMap, blocks])
 
   const sensors = useSensors(
     useSensor(MouseSensor),
@@ -139,7 +121,7 @@ const Agenda = () => {
           data={agendaData}
           parentId={null}
           onHover={handleHover}
-          expandedMap={expandedMap}
+          expandedMap={effectiveExpandedMap}
           dispatchExpand={dispatchExpand}
         />
         <DragOverlay>{activeId && <div className="bg-gray-200 p-2 rounded">Dragging {activeId}</div>}</DragOverlay>
