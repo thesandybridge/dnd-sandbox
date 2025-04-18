@@ -1,18 +1,29 @@
 import { useDroppable } from "@dnd-kit/core"
-import { memo, useCallback, useEffect } from "react"
+import { memo, useCallback, useEffect, useMemo } from "react"
 
 interface Props {
   id: string,
   onHover: (zoneId: string, parentId: string | null) => void
   parentId: string | null,
+  type?: 'topic' | 'section' | 'objective'
 }
 
-const DropZone = ({ id, onHover, parentId }: Props) => {
+const DropZone = ({ id, onHover, parentId, type }: Props) => {
   const { setNodeRef, isOver } = useDroppable({ id })
 
   const handleHover = useCallback(() => onHover(id, parentId), [id, parentId, onHover])
 
   useEffect(() => { if (isOver) handleHover() }, [isOver, handleHover])
+
+  const color = useMemo(() => {
+    switch (type) {
+      case "section":
+        return "bg-green-500"
+      default:
+        return "bg-blue-500"
+    }
+  }, [type]);
+
   return (
     <div
       ref={setNodeRef}
@@ -26,7 +37,7 @@ const DropZone = ({ id, onHover, parentId }: Props) => {
           onHover(zoneId, parentId)
         }
       }}
-      className={`flex-none h-1 rounded transition-colors ${isOver ? 'bg-blue-500' : 'bg-transparent'}`} />
+      className={`flex-none h-1 rounded transition-colors ${isOver ? color : 'bg-transparent'}`} />
   )
 }
 
