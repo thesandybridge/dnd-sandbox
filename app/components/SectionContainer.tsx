@@ -93,13 +93,15 @@ const SectionContainer = ({
       {isExpanded && (
         <>
           <div className="">
-            {children.map(child => (
+            {children.map((child, idx) => (
               <Fragment key={child.id}>
-                <DropZone
-                  id={`before-${child.id}`}
-                  onHover={onHover}
-                  parentId={child.parentId}
-                />
+                {idx === 0 && (
+                  <DropZone
+                    id={`before-${child.id}`}
+                    onHover={onHover}
+                    parentId={child.parentId}
+                  />
+                )}
                 <ItemWrapper id={child.id} data={data} />
                 <DropZone
                   id={`after-${child.id}`}

@@ -32,6 +32,8 @@ export function reparentBlock(
     return blocks
   }
 
+  if (dragged.id === zoneTargetId) return blocks
+
   // Determine where in the array the dragged item should be inserted
   let insertIndex = remaining.length
 

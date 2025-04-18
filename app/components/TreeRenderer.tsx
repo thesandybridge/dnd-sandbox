@@ -41,16 +41,18 @@ const TreeRenderer = ({
 
   return (
     <div className={indent}>
-      {items.map(block => {
+      {items.map((block, idx) => {
         const childBlocks = blocksByParent.get(block.id) ?? []
 
         return (
           <Fragment key={block.id}>
-            <DropZone
-              id={`before-${block.id}`}
-              onHover={onHover}
-              parentId={block.parentId}
-            />
+            {idx === 0 && (
+              <DropZone
+                id={`before-${block.id}`}
+                onHover={onHover}
+                parentId={block.parentId}
+              />
+            )}
             {block.type === 'section' ? (
               <SectionContainer
                 block={block}
