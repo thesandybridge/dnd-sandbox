@@ -4,8 +4,21 @@ const ALL_MODIFIERS = ['Shift', 'Meta', 'Control', 'Alt'] as const
 type ModifierKey = typeof ALL_MODIFIERS[number]
 
 /**
- * Tracks exclusive modifier key press (e.g. Shift but not Shift+Ctrl).
- * Returns boolean state, ref, and a styled <kbd> component.
+ * Returns true if the current focus is on a content-editable element (Tiptap, inputs, etc).
+ */
+function isInEditableContext(): boolean {
+  const el = document.activeElement
+  return !!(
+    el &&
+    (el instanceof HTMLInputElement ||
+      el instanceof HTMLTextAreaElement ||
+      (el instanceof HTMLElement && el.isContentEditable))
+  )
+}
+
+/**
+ * Tracks exclusive modifier key press (e.g. Shift but not Shift+Ctrl),
+ * ignoring presses when focused in content-editable elements like Tiptap.
  */
 export function useModifierKey(modifierKey: ModifierKey) {
   const [pressed, setPressed] = useState(false)
@@ -15,6 +28,8 @@ export function useModifierKey(modifierKey: ModifierKey) {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (isInEditableContext()) return
+
       const isOnlyPressed =
         e.getModifierState(modifierKey) &&
         otherModifiers.every(mod => !e.getModifierState(mod))
@@ -29,6 +44,7 @@ export function useModifierKey(modifierKey: ModifierKey) {
     }
 
     const handleKeyUp = () => {
+      if (isInEditableContext()) return
       pressedRef.current = false
       setPressed(false)
     }
