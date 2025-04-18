@@ -1,13 +1,13 @@
 import { agendaReducer } from '@/app/reducers/agendaReducer'
 import type { Agenda } from '@/app/page'
 
-function createLargeAgenda(count: number): Agenda[] {
+function createLargeAgenda(sectionCount: number, topicsPerSection = 10): Agenda[] {
   const blocks: Agenda[] = []
-  for (let i = 0; i < count; i++) {
+  for (let i = 0; i < sectionCount; i++) {
     const sectionId = `section-${i}`
     blocks.push({ id: sectionId, type: 'section', parentId: null })
 
-    for (let j = 0; j < 10; j++) {
+    for (let j = 0; j < topicsPerSection; j++) {
       blocks.push({
         id: `topic-${i}-${j}`,
         type: 'topic',
@@ -18,29 +18,57 @@ function createLargeAgenda(count: number): Agenda[] {
   return blocks
 }
 
-describe('agendaReducer performance', () => {
-  it('handles moving an item in a large agenda', () => {
-    const initialState = createLargeAgenda(100) // 1,100 items
+function getRandom<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)]
+}
 
-    const moveAction = {
-      type: 'MOVE_ITEM' as const,
-      payload: {
-        activeId: 'topic-50-5',
-        hoverZone: 'after-topic-50-6',
-      },
-    }
+describe('agendaReducer performance under randomized MOVE_ITEM', () => {
+  const testScenarios = [
+    { sectionCount: 100, topicsPerSection: 10, maxMs: 500 },
+    { sectionCount: 500, topicsPerSection: 10, maxMs: 7000 },
+    { sectionCount: 1000, topicsPerSection: 10, maxMs: 40000 },
+  ]
 
-    const start = performance.now()
+  testScenarios.forEach(({ sectionCount, topicsPerSection, maxMs }) => {
+    it(`performs ${sectionCount * topicsPerSection} MOVE_ITEM actions in under ${maxMs}ms`, () => {
+      const topicCount = sectionCount * topicsPerSection
+      const movesToPerform = topicCount
 
-    const nextState = agendaReducer(initialState, moveAction)
+      let state = createLargeAgenda(sectionCount, topicsPerSection)
 
-    const end = performance.now()
-    const duration = end - start
+      const topicIds = state.filter(b => b.type === 'topic').map(b => b.id)
+      const dropZones = topicIds.map(id => `after-${id}`)
 
-    expect(nextState).toHaveLength(initialState.length)
-    expect(nextState.find(b => b.id === 'topic-50-5')?.parentId).toBe('section-50')
+      const start = performance.now()
 
-    console.log(`agendaReducer MOVE_ITEM took ${duration.toFixed(2)}ms`)
-    expect(duration).toBeLessThan(50)
+      for (let i = 0; i < movesToPerform; i++) {
+        const activeId = getRandom(topicIds)
+        let hoverZone = getRandom(dropZones)
+
+        // Avoid no-op
+        while (hoverZone === `after-${activeId}`) {
+          hoverZone = getRandom(dropZones)
+        }
+
+        state = agendaReducer(state, {
+          type: 'MOVE_ITEM',
+          payload: { activeId, hoverZone },
+        })
+      }
+
+      const end = performance.now()
+      const duration = end - start
+      const avg = duration / movesToPerform
+
+      expect(state.length).toBe(sectionCount + topicCount)
+
+      console.log(
+        `Performed ${movesToPerform} random MOVE_ITEM actions in ${duration.toFixed(
+2
+)}ms (avg: ${avg.toFixed(4)}ms per move)`
+      )
+
+      expect(duration).toBeLessThan(maxMs)
+    })
   })
 })
