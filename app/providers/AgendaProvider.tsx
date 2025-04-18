@@ -43,7 +43,11 @@ function agendaReducer(state: Agenda[], action: AgendaAction): Agenda[] {
     case 'SET_ALL':
       return action.payload;
     case 'MOVE_ITEM':
-      return reparentBlock (state, action.payload.activeId, action.payload.hoverZone);
+      return reparentBlock(
+        state,
+        action.payload.activeId,
+        action.payload.hoverZone
+      );
     default:
       return state;
   }
