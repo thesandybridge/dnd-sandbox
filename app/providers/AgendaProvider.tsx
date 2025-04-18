@@ -50,44 +50,53 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
     return { blockMap, childrenMap, indexMap }
   }, [blocks])
 
-  const createItem = useCallback((type: Agenda['type'], parentId: string | null = null): Agenda => {
-    const newItem: Agenda = { id: uuidv4(), type, parentId };
-    dispatch({ type: 'ADD_ITEM', payload: newItem });
+  const createItem = useCallback((
+    type: Agenda['type'],
+    parentId: string | null = null,
+    testId?: string
+  ): Agenda => {
+      const newItem: Agenda = {
+        id: uuidv4(),
+        type,
+        parentId,
+        ...(testId ? { testId } : {})
+      };
+      dispatch({ type: 'ADD_ITEM', payload: newItem });
 
-    queryClient.setQueryData<Map<string, BlockContent>>(['agenda-details'], (old) => {
-      const map = new Map(old ?? [])
-      let content: BlockContent
+      queryClient.setQueryData<Map<string, BlockContent>>(['agenda-details'], (old) => {
+        const map = new Map(old ?? [])
+        let content: BlockContent
 
-      switch (newItem.type) {
-        case 'section':
-          content = {
-            type: 'section',
-            title: `SECTION ${newItem.id.slice(0, 4)}`,
-            summary: ''
-          }
-          break
-        case 'topic':
-          content = {
-            type: 'topic',
-            title: `TOPIC ${newItem.id.slice(0, 4)}`,
-            description: ''
-          }
-          break
-        case 'objective':
-          content = {
-            type: 'objective',
-            title: `OBJECTIVE ${newItem.id.slice(0, 4)}`,
-            progress: 0
-          }
-          break
-      }
+        switch (newItem.type) {
+          case 'section':
+            content = {
+              type: 'section',
+              title: `SECTION ${newItem.id.slice(0, 4)}`,
+              summary: ''
+            }
+            break
+          case 'topic':
+            content = {
+              type: 'topic',
+              title: `TOPIC ${newItem.id.slice(0, 4)}`,
+              description: ''
+            }
+            break
+          case 'objective':
+            content = {
+              type: 'objective',
+              title: `OBJECTIVE ${newItem.id.slice(0, 4)}`,
+              progress: 0
+            }
+            break
+        }
 
-      map.set(newItem.id, content)
-      return map
-    })
+        map.set(newItem.id, content)
+        return map
+      })
 
-    return newItem;
-  }, [dispatch, queryClient])
+      return newItem;
+    }, [dispatch, queryClient])
 
   const deleteItem = useCallback((id: string) => {
     const toDelete = new Set<string>([id])

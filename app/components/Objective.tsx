@@ -82,7 +82,12 @@ const Objective = ({ block, content }: Props) => {
       style={style}
       className={`transition-opacity ${isDragging ? 'opacity-0' : 'opacity-100'} flex gap-2 p-2 items-center space-between rounded-lg p-4 border border-gray-300`}
     >
-      <div {...listeners} {...attributes} className="cursor-move px-1">
+      <div
+        {...listeners}
+        {...attributes}
+        className="cursor-move px-1"
+        data-testid={block.testId ? `drag-handle-${block.testId}` : undefined}
+      >
         ☰ {/* drag handle icon */}
       </div>
       <div className='grow'>

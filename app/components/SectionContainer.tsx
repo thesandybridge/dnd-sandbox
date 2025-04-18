@@ -77,7 +77,12 @@ const SectionContainer = ({
     >
       <div className="flex items-center gap-2 justify-between bg-gray-50 rounded-lg p-2">
         <div className="flex gap-2 align-center justify-center">
-          <div {...listeners} {...attributes} className="cursor-move px-1">
+          <div
+            {...listeners}
+            {...attributes}
+            className="cursor-move px-1"
+            data-testid={block.testId ? `drag-handle-${block.testId}` : undefined}
+          >
             ☰ {/* drag handle icon */}
           </div>
           <button onClick={() => dispatchExpand({ type: 'TOGGLE', id: block.id })} className="text-gray-600">

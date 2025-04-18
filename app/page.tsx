@@ -6,6 +6,7 @@ export interface Agenda {
   id: string,
   type: 'section' | 'topic' | 'objective',
   parentId: string | null
+  testId?: string
 }
 
 export default function AgendaPage() {

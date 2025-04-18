@@ -1,6 +1,6 @@
 'use client'
 
-import { memo, useCallback, useReducer, useState, useMemo } from "react"
+import { memo, useCallback, useReducer, useState, useMemo, useEffect } from "react"
 import {
   DndContext,
   DragOverlay,
@@ -21,12 +21,32 @@ import expandReducer from "../reducers/expandReducer"
 
 const dndConfig = { collisionDetection: closestCenter }
 
-const Agenda = () => {
+type AgendaProps = {
+  defaultExpandAll?: boolean
+}
+
+const Agenda = ({ defaultExpandAll = false }: AgendaProps) => {
+
   const { blocks, createItem, moveItem } = useAgenda()
   const { data: agendaData } = useAgendaDetails(blocks)
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null)
   const [hoverZone, setHoverZone] = useState<string | null>(null)
-  const [expandedMap, dispatchExpand] = useReducer(expandReducer, { '1': true, '4': true })
+  const [expandedMap, dispatchExpand] = useReducer(expandReducer, {})
+
+  useEffect(() => {
+    if (!defaultExpandAll) return
+    if (blocks.length === 0) return
+
+    const map: Record<string, boolean> = {}
+    for (const b of blocks) {
+      if (b.type === 'section') {
+        map[b.id] = true
+      }
+    }
+
+    dispatchExpand({ type: 'SET_ALL', map })
+  }, [blocks, defaultExpandAll])
+
 
   const activeBlock = useMemo(
     () => blocks.find(b => b.id === activeId),
