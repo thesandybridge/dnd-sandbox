@@ -74,6 +74,14 @@ const SectionContainer = ({
           <div>{children.length} Item{`${children.length === 1 ? '' : 's'}`}</div>
         )}
       </div>
+      {children.length === 0 && isExpanded && (
+        <DropZone
+          id={`into-${block.id}`}
+          onHover={onHover}
+          parentId={block.parentId}
+          type="section"
+        />
+      )}
       {!isExpanded && (
         <DropZone
           id={`into-${block.id}`}
