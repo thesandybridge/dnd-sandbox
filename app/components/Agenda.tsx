@@ -123,6 +123,7 @@ const Agenda = () => {
           onHover={handleHover}
           expandedMap={effectiveExpandedMap}
           dispatchExpand={dispatchExpand}
+          hoverZone={hoverZone}
         />
         <DragOverlay>{activeId && <div className="bg-gray-200 p-2 rounded">Dragging {activeId}</div>}</DragOverlay>
       </DndContext>

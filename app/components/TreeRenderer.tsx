@@ -17,6 +17,7 @@ export interface Props {
   onHover: (zoneId: string, parentId: string | null) => void
   parentId: string | null
   data?: Map<string, BlockContent>
+  hoverZone: string | null
 }
 
 const TreeRenderer = ({
@@ -26,6 +27,7 @@ const TreeRenderer = ({
   expandedMap,
   dispatchExpand,
   data,
+  hoverZone,
 }: Props) => {
   const blocksByParent = useMemo(() => {
     const map = new Map<string | null, Agenda[]>()
@@ -61,6 +63,7 @@ const TreeRenderer = ({
                 dispatchExpand={dispatchExpand}
                 onHover={onHover}
                 data={data}
+                hoverZone={hoverZone}
               />
             ) : (
                 <ItemWrapper id={block.id} data={data} />

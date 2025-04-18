@@ -24,6 +24,7 @@ export interface Props {
   dispatchExpand: Dispatch<ExpandAction>;
   onHover: (zoneId: string, parentId: string | null) => void;
   data?: Map<string, BlockContent>
+  hoverZone: string | null
 }
 
 const SectionContainer = ({
@@ -33,12 +34,25 @@ const SectionContainer = ({
   onHover,
   blocks,
   data,
+  hoverZone,
 }: Props) => {
   const { createItem, deleteItem } = useAgenda()
   const children = useSectionChildren(block.id, blocks)
   const isExpanded = !!expandedMap[block.id]
   const { attributes, listeners, setNodeRef, transform } = useDraggable({ id: block.id });
   const content = data?.get(block.id)
+  const isHoveredOverThis = useMemo(() => {
+    if (!hoverZone) return false
+
+    const directZones = [`into-${block.id}`]
+
+    // Add all dropzones that are inside this section
+    children.forEach(child => {
+      directZones.push(`before-${child.id}`, `after-${child.id}`)
+    })
+
+    return directZones.includes(hoverZone)
+  }, [hoverZone, block.id, children])
 
   const style = {
     transform: `translate(${transform?.x ?? 0}px, ${transform?.y ?? 0}px)`,
@@ -92,7 +106,10 @@ const SectionContainer = ({
       )}
       {isExpanded && (
         <>
-          <div className="flex flex-col gap-2">
+          <div
+            className={`p-2 flex flex-col gap-2 transition-all duration-150 ${isHoveredOverThis ? 'border rounded-lg border-dashed border-blue-400' : ''}`}
+          >
+
             {children.map((child, idx) => (
               <Fragment key={child.id}>
                 {idx === 0 && (
