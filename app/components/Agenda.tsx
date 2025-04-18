@@ -15,11 +15,12 @@ import {
 import TreeRenderer from './TreeRenderer'
 import { useAgenda } from '../providers/AgendaProvider'
 import { useAgendaDetails } from "../hooks/useAgendaDetails"
+import { useModifierKey } from "../hooks/useModifierKey"
+import { DragStartEvent } from "@dnd-kit/core"
 
-type ExpandAction = {
-  type: 'TOGGLE';
-  id: string;
-};
+type ExpandAction =
+  | { type: 'TOGGLE'; id: string }
+  | { type: 'SET_ALL'; map: Record<string, boolean> }
 
 function expandReducer(
   state: Record<string, boolean>,
@@ -28,6 +29,8 @@ function expandReducer(
   switch (action.type) {
     case 'TOGGLE':
       return { ...state, [action.id]: !state[action.id] }
+    case 'SET_ALL':
+      return action.map
     default:
       return state
   }
@@ -41,6 +44,25 @@ const Agenda = () => {
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null)
   const [hoverZone, setHoverZone] = useState<string | null>(null)
   const [expandedMap, dispatchExpand] = useReducer(expandReducer, { '1': true, '4': true })
+  const {
+    pressed: isShiftHeld,
+    pressedRef: shiftKeyRef,
+    DisplayKey,
+  } = useModifierKey('Shift')
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id)
+
+    if (shiftKeyRef.current) {
+      setTimeout(() => {
+        const collapsed: Record<string, boolean> = {}
+        blocks.forEach(b => {
+          if (b.type === 'section') collapsed[b.id] = false
+        })
+        dispatchExpand({ type: 'SET_ALL', map: collapsed })
+      }, 100) // just enough to stabilize drag overlay
+    }
+  }
 
   const sensors = useSensors(
     useSensor(MouseSensor),
@@ -86,10 +108,11 @@ const Agenda = () => {
         >
           + Objective
         </button>
+        {isShiftHeld && <DisplayKey />}
       </div>
       <DndContext
         {...dndConfig}
-        onDragStart={e => setActiveId(e.active.id)}
+        onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
         sensors={sensors}
       >
