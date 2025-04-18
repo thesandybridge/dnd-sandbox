@@ -36,7 +36,5 @@ yarn-error.log*
 next-env.d.ts
 
 # testing
-/tests/
-/e2e
 /test-results/
 /screenshots
