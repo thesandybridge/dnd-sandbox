@@ -28,6 +28,7 @@ const DropZone = ({ id, onHover, parentId, type }: Props) => {
     <div
       ref={setNodeRef}
       data-zone-id={id}
+      data-testid={id}
       data-parent-id={parentId ?? ''}
       onDragOver={e => {
         e.preventDefault()
