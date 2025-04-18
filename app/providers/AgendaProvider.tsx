@@ -11,7 +11,7 @@ import React, {
 import { v4 as uuidv4 } from 'uuid'
 import type { UniqueIdentifier } from '@dnd-kit/core'
 import { Agenda } from '../page'
-import { reparentBlock } from '../utils/blocks'
+import { reparentBlock } from '../utils/blocks' // assume this now accepts indexMap
 import { useQueryClient } from '@tanstack/react-query'
 import { BlockContent } from '../hooks/useAgendaDetails'
 
@@ -27,7 +27,6 @@ function agendaReducer(state: Agenda[], action: AgendaAction): Agenda[] {
       return [...state, action.payload];
     case 'DELETE_ITEM': {
       const toDelete = new Set<string>([action.payload.id]);
-      // keep adding children of anything in toDelete
       let oldSize: number;
       do {
         oldSize = toDelete.size;
@@ -39,15 +38,33 @@ function agendaReducer(state: Agenda[], action: AgendaAction): Agenda[] {
       } while (toDelete.size !== oldSize);
 
       return state.filter(item => !toDelete.has(item.id));
-    };
+    }
     case 'SET_ALL':
       return action.payload;
-    case 'MOVE_ITEM':
+    case 'MOVE_ITEM': {
+      const blockMap = new Map<string, Agenda>()
+      const childrenMap = new Map<string | null, Agenda[]>()
+      const indexMap = new Map<string, number>()
+
+      for (let i = 0; i < state.length; i++) {
+        const block = state[i]
+        blockMap.set(block.id, block)
+        indexMap.set(block.id, i)
+
+        const key = block.parentId ?? null
+        const list = childrenMap.get(key) ?? []
+        childrenMap.set(key, [...list, block])
+      }
+
       return reparentBlock(
         state,
+        blockMap,
+        childrenMap,
+        indexMap,
         action.payload.activeId,
         action.payload.hoverZone
-      );
+      )
+    }
     default:
       return state;
   }
@@ -55,7 +72,9 @@ function agendaReducer(state: Agenda[], action: AgendaAction): Agenda[] {
 
 interface AgendaContextValue {
   blocks: Agenda[];
-  blockMap: Map<string, Agenda>
+  blockMap: Map<string, Agenda>;
+  childrenMap: Map<string | null, Agenda[]>;
+  indexMap: Map<string, number>;
   createItem: (type: Agenda['type'], parentId?: string | null) => Agenda;
   deleteItem: (id: string) => void;
   moveItem: (activeId: UniqueIdentifier, hoverZone: string) => void;
@@ -68,22 +87,30 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient()
   const [blocks, dispatch] = useReducer(agendaReducer, []);
 
-  const blockMap = useMemo(() => {
-    const map = new Map<string, Agenda>()
-    for (const block of blocks) {
-      map.set(block.id, block)
+  const { blockMap, childrenMap, indexMap } = useMemo(() => {
+    const blockMap = new Map<string, Agenda>()
+    const childrenMap = new Map<string | null, Agenda[]>()
+    const indexMap = new Map<string, number>()
+
+    for (let i = 0; i < blocks.length; i++) {
+      const block = blocks[i]
+      blockMap.set(block.id, block)
+      indexMap.set(block.id, i)
+
+      const key = block.parentId ?? null
+      const list = childrenMap.get(key) ?? []
+      childrenMap.set(key, [...list, block])
     }
-    return map
+
+    return { blockMap, childrenMap, indexMap }
   }, [blocks])
 
   const createItem = useCallback((type: Agenda['type'], parentId: string | null = null): Agenda => {
     const newItem: Agenda = { id: uuidv4(), type, parentId };
     dispatch({ type: 'ADD_ITEM', payload: newItem });
 
-    // Update agenda details cache if it's a content block
     queryClient.setQueryData<Map<string, BlockContent>>(['agenda-details'], (old) => {
       const map = new Map(old ?? [])
-
       let content: BlockContent
 
       switch (newItem.type) {
@@ -94,7 +121,6 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
             summary: ''
           }
           break
-
         case 'topic':
           content = {
             type: 'topic',
@@ -102,7 +128,6 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
             description: ''
           }
           break
-
         case 'objective':
           content = {
             type: 'objective',
@@ -121,9 +146,8 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
 
   const deleteItem = useCallback((id: string) => {
     const toDelete = new Set<string>([id])
-
-    // Walk the current block tree to find all children of the block being deleted
     let oldSize: number
+
     do {
       oldSize = toDelete.size
       for (const block of blocks) {
@@ -133,7 +157,6 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
       }
     } while (toDelete.size !== oldSize)
 
-    // Update the agenda-details cache
     queryClient.setQueryData<Map<string, BlockContent>>(['agenda-details'], (old) => {
       if (!old) return new Map()
 
@@ -141,30 +164,30 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
       for (const id of toDelete) {
         map.delete(id)
       }
-
       return map
     })
 
-    // Then update the agenda structure
     dispatch({ type: 'DELETE_ITEM', payload: { id } })
   }, [blocks, queryClient])
 
   const moveItem = useCallback((activeId: UniqueIdentifier, hoverZone: string) => {
     dispatch({ type: 'MOVE_ITEM', payload: { activeId, hoverZone } });
-  }, []);
+  }, [])
 
   const setAll = useCallback((all: Agenda[]) => {
     dispatch({ type: 'SET_ALL', payload: all });
-  }, []);
+  }, [])
 
   const contextValue = useMemo(() => ({
     blocks,
     blockMap,
+    childrenMap,
+    indexMap,
     createItem,
     deleteItem,
     moveItem,
     setAll
-  }), [blockMap, blocks, createItem, deleteItem, moveItem, setAll])
+  }), [blocks, blockMap, childrenMap, indexMap, createItem, deleteItem, moveItem, setAll])
 
   return (
     <AgendaContext.Provider value={contextValue}>
@@ -174,7 +197,7 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
 }
 
 export function useAgenda() {
-  const ctx = useContext(AgendaContext);
-  if (!ctx) throw new Error('useAgenda must be inside AgendaProvider');
-  return ctx;
+  const ctx = useContext(AgendaContext)
+  if (!ctx) throw new Error('useAgenda must be inside AgendaProvider')
+  return ctx
 }
