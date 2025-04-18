@@ -9,11 +9,11 @@ export function reparentBlock(
   activeId: UniqueIdentifier,
   hoverZone: string
 ): Agenda[] {
-  const dragged = blockMap.get(activeId)
+  const dragged = blockMap.get(activeId.toString())
   if (!dragged) return blocks
 
   const zoneTargetId = hoverZone.replace(/^(before|after|into)-/, '')
-  const target = blockMap.get(zoneTargetId)
+  const target = blockMap.get(zoneTargetId.toString())
   const isAfter = hoverZone.startsWith('after-')
   const isInto = hoverZone.startsWith('into-')
 
