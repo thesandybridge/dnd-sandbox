@@ -13,8 +13,8 @@ function useSectionChildren(sectionId: string, blocks: Agenda[]) {
 }
 
 export type ExpandAction = {
-    type: 'TOGGLE';
-    id: string;
+  type: 'TOGGLE';
+  id: string;
 };
 
 export interface Props {
@@ -49,6 +49,7 @@ const SectionContainer = ({
   const content = data?.get(block.id)
   const isHoveredOverThis = useMemo(() => {
     if (!hoverZone) return false
+    if (children.length === 0) return false
 
     const directZones = [`into-${block.id}`]
 
