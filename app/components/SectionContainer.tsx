@@ -92,7 +92,7 @@ const SectionContainer = ({
       )}
       {isExpanded && (
         <>
-          <div className="">
+          <div className="flex flex-col gap-2">
             {children.map((child, idx) => (
               <Fragment key={child.id}>
                 {idx === 0 && (
