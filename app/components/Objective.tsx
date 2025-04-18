@@ -1,12 +1,14 @@
 'use client'
 
-import { memo, useEffect } from 'react'
+import { memo, useCallback, useEffect } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { useQueryClient } from '@tanstack/react-query'
 
 import { Agenda } from '../page'
 import { BlockContent, ObjectiveContent } from '../hooks/useAgendaDetails'
+import { useDraggable } from '@dnd-kit/core'
+import { useAgenda } from '../providers/AgendaProvider'
 
 interface Props {
   block: Agenda
@@ -15,6 +17,18 @@ interface Props {
 
 const Objective = ({ block, content }: Props) => {
   const queryClient = useQueryClient()
+  const { deleteItem } = useAgenda()
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+    id: block.id
+  });
+  const style = {
+    transform: `translate(${transform?.x ?? 0}px, ${transform?.y ?? 0}px)`,
+  };
+
+  const handleDelete = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    deleteItem(block.id);
+  }, [block.id, deleteItem]);
 
   const editor = useEditor({
     content: content?.title,
@@ -63,7 +77,23 @@ const Objective = ({ block, content }: Props) => {
   if (!editor) return null
 
   return (
-    <EditorContent editor={editor} />
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex gap-2 p-2 items-center space-between rounded-lg p-4 border border-gray-300"
+    >
+      <div {...listeners} {...attributes} className="cursor-move px-1">
+        ☰ {/* drag handle icon */}
+      </div>
+      <div className='grow'>
+        <EditorContent editor={editor} />
+      </div>
+      <button
+        onClick={handleDelete}
+      >
+        ×
+      </button>
+    </div>
   )
 }
 
