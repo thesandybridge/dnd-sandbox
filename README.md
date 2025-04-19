@@ -3,7 +3,7 @@
 This is a performant, testable drag-and-drop agenda editor built with [@dnd-kit/core](https://github.com/clauderic/dnd-kit), [Next.js App Router](https://nextjs.org/docs/app), and React. It supports:
 
 - Nested, sortable blocks (`section`, `topic`, `objective`)
-- Modifier key interactions (`Shift` to collapse/expand sections)
+- Modifier key interactions (<kbd>Shift</kbd> to collapse/expand sections)
 - Accessible drag handles with overlays
 - Deep testing: unit, performance, and E2E
 
