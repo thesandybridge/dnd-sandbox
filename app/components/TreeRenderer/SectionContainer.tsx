@@ -77,9 +77,20 @@ const SectionContainer = ({ block }: Props) => {
         {!isExpanded && <div>{children.length} Item{children.length === 1 ? '' : 's'}</div>}
       </div>
 
-      {!isExpanded &&
-        <DropZone id={`into-${block.id}`} parentId={block.parentId} type="section" />
-      }
+      {children.length === 0 && isExpanded && (
+        <DropZone
+          id={`into-${block.id}`}
+          parentId={block.parentId}
+          type="section"
+        />
+      )}
+      {!isExpanded && (
+        <DropZone
+          id={`into-${block.id}`}
+          parentId={block.parentId}
+          type="section"
+        />
+      )}
 
       {isExpanded && (
         <>
