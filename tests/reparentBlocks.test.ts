@@ -1,4 +1,4 @@
-import { Block } from '@/app/providers/BlockProvider'
+import { Block } from '@/app/types/block'
 import { reparentBlock } from '@/app/utils/blocks'
 
 function createMaps(blocks: Block[]) {

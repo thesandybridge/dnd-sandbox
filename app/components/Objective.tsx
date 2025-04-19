@@ -7,7 +7,8 @@ import { useQueryClient } from '@tanstack/react-query'
 
 import { BlockContent, ObjectiveContent } from '../hooks/useAgendaDetails'
 import { useDraggable } from '@dnd-kit/core'
-import { useBlocks, Block } from '../providers/BlockProvider'
+import { useBlocks } from '../providers/BlockProvider'
+import { Block } from '../types/block'
 
 interface Props {
   block: Block

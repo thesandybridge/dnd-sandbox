@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { Block } from '../providers/BlockProvider'
+import { Block } from '../types/block'
 
 export type SectionContent = {
   type: 'section'
