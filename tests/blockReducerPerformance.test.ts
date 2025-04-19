@@ -1,4 +1,4 @@
-import { Block } from "@/app/providers/BlockProvider"
+import { Block } from '@/app/types/block'
 import { blockReducer } from "@/app/reducers/blockReducer"
 
 function createLargeBlock(sectionCount: number, topicsPerSection = 10): Block[] {

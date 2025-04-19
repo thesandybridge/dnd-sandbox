@@ -1,5 +1,5 @@
 import type { UniqueIdentifier } from '@dnd-kit/core'
-import { Block } from '../providers/BlockProvider'
+import { BaseBlock } from '../types/block'
 
 /**
  * Reparents and repositions a block within a flat tree structure
@@ -19,14 +19,14 @@ import { Block } from '../providers/BlockProvider'
  * @param hoverZone - The drop zone string, e.g. `before-3`, `after-5`, or `into-4`
  * @returns A new Block array with the dragged block repositioned
  */
-export function reparentBlock(
-  blocks: Block[],
-  blockMap: Map<string, Block>,
-  childrenMap: Map<string | null, Block[]>,
+export function reparentBlock<T extends BaseBlock>(
+  blocks: T[],
+  blockMap: Map<string, T>,
+  childrenMap: Map<string | null, T[]>,
   indexMap: Map<string, number>,
   activeId: UniqueIdentifier,
   hoverZone: string
-): Block[] {
+): T[] {
   const dragged = blockMap.get(activeId.toString())
   if (!dragged) return blocks
 
@@ -41,9 +41,7 @@ export function reparentBlock(
     : target?.parentId ?? null
 
   // Prevent sections from being nested
-  if (dragged.type === 'section' && newParentId !== null) {
-    return blocks
-  }
+  if (dragged.type === 'section' && newParentId !== null) return blocks
 
   // Prevent dropping onto itself
   if (dragged.id === zoneTargetId) return blocks

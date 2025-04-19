@@ -8,6 +8,7 @@ import { useTreeContext } from "../providers/TreeProvider"
 import { useBlocks } from "../providers/BlockProvider"
 import Topic from "./Topic"
 import Objective from "./Objective"
+import { useSyncAgendaContent } from "../hooks/useSyncAgendaContext"
 
 const AgendaControls = () => {
   const { createItem } = useBlocks()
@@ -41,7 +42,7 @@ const ItemRenderer = ({ id, content }: { id: string, content: BlockContent }) =>
 const Agenda = () => {
   const { blocks } = useBlocks()
   const { data } = useAgendaDetails(blocks)
-
+  useSyncAgendaContent()
   if (!data) return null
 
   return (

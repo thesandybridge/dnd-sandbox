@@ -1,6 +1,7 @@
 
 import Agenda from './components/Agenda';
-import { Block, BlockProvider } from './providers/BlockProvider'
+import { BlockProvider } from './providers/BlockProvider'
+import { Block } from './types/block';
 
 const fetchedBlocks: Block[] = [
   { id: '1', type: 'section', parentId: null },

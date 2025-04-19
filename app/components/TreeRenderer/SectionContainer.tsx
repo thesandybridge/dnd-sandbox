@@ -6,7 +6,8 @@ import DropZone from './DropZone'
 import { useTreeContext } from '@/app/providers/TreeProvider'
 import { useDraggable } from '@dnd-kit/core'
 import Section from '../Section'
-import { Block, useBlocks } from '@/app/providers/BlockProvider'
+import { useBlocks } from '@/app/providers/BlockProvider'
+import { Block } from '@/app/types/block'
 
 interface Props {
   block: Block
