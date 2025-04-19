@@ -35,9 +35,15 @@ interface BlockContextValue {
 
 const BlockContext = createContext<BlockContextValue | undefined>(undefined);
 
-export function BlockProvider({ children }: { children: ReactNode }) {
+export function BlockProvider({
+  children,
+  initialBlocks = [],
+}: {
+    children: ReactNode
+    initialBlocks?: Block[]
+  }) {
   const queryClient = useQueryClient()
-  const [blocks, dispatch] = useReducer(blockReducer, []);
+  const [blocks, dispatch] = useReducer(blockReducer, initialBlocks);
 
   const { blockMap, childrenMap, indexMap } = useMemo(() => {
     const blockMap = new Map<string, Block>()
