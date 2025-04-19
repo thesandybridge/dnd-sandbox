@@ -34,9 +34,9 @@ const SectionContainer = ({ block }: Props) => {
     isDragging,
   } = useDraggable({ id: block.id })
 
-  const style = useMemo(() => {
+  const style = {
     transform: `translate(${transform?.x ?? 0}px, ${transform?.y ?? 0}px)`
-  }, [transform?.x, transform?.y])
+  }
 
   const isHoveredOverThis = useMemo(() => {
     if (!hoverZone || children.length === 0) return false
