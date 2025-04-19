@@ -12,10 +12,10 @@ interface Props {
 
 const ItemWrapper = ({ id }: Props) => {
   const { blockMap } = useAgenda()
-  const { agendaData } = useTreeContext()
+  const { data } = useTreeContext()
 
   const block = blockMap.get(id)
-  const content = agendaData?.get(id)
+  const content = data?.get(id)
 
   if (!block || !content) return null
 

@@ -29,10 +29,10 @@ const TreeRenderer = ({ parentId = null }: Props) => {
   const {
     blocksByParent,
     activeBlock,
-    agendaData,
     setActiveId,
     activeId,
     hoverZone,
+    data,
     setHoverZone,
   } = useTreeContext()
 
@@ -43,7 +43,7 @@ const TreeRenderer = ({ parentId = null }: Props) => {
   )
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
-    setActiveId(event.active.id)
+    setActiveId(String(event.active.id))
   }, [setActiveId])
 
   const handleDragEnd = useCallback(() => {
@@ -95,7 +95,7 @@ const TreeRenderer = ({ parentId = null }: Props) => {
               {activeBlock.type}
             </div>
             <div className="font-semibold text-gray-800 mb-2">
-              {agendaData?.get(activeBlock.id)?.title ?? `Untitled ${activeBlock.type}`}
+              {data?.get(activeBlock.id)?.title ?? `Untitled ${activeBlock.type}`}
             </div>
           </div>
         )}

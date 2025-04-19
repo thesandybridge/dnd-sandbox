@@ -18,13 +18,13 @@ const SectionContainer = ({ block }: Props) => {
     blocksByParent,
     expandedMap,
     dispatchExpand,
-    agendaData,
+    data,
     hoverZone,
   } = useTreeContext()
 
   const children = useMemo(() => blocksByParent.get(block.id) ?? [], [block.id, blocksByParent])
   const isExpanded = !!expandedMap[block.id]
-  const content = agendaData?.get(block.id)
+  const content = data?.get(block.id)
 
   const {
     attributes,
