@@ -11,13 +11,13 @@ import { Block } from '../providers/BlockProvider'
  * - Computes the new insertion index relative to the updated list
  * - Returns a new list with the block moved into the correct position
  *
- * @param blocks - The full list of Agenda blocks in flat structure
+ * @param blocks - The full list of blocks in flat structure
  * @param blockMap - Map of block ID to block object for O(1) lookup
  * @param childrenMap - Map of parent ID to list of child blocks
  * @param indexMap - Map of block ID to index in the original list (before removal)
  * @param activeId - The ID of the block being dragged
  * @param hoverZone - The drop zone string, e.g. `before-3`, `after-5`, or `into-4`
- * @returns A new Agenda array with the dragged block repositioned
+ * @returns A new Block array with the dragged block repositioned
  */
 export function reparentBlock(
   blocks: Block[],
