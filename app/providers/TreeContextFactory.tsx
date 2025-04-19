@@ -62,6 +62,11 @@ export function createTreeContext<T = unknown>() {
       return map
     }, [blocks])
 
+    const activeItem = useMemo(() => {
+      if (!activeId) return null
+      return data.get(activeId) ?? null
+    }, [activeId, data])
+
     const handleHover = useCallback(
       (zoneId: string, parentId: string | null) => {
         const dragged = blocks.find(b => b.id === activeId)
@@ -72,7 +77,7 @@ export function createTreeContext<T = unknown>() {
       [activeId, blocks]
     )
 
-    const value: TreeContextType<T> = {
+    const value = useMemo<TreeContextType<T>>(() => ({
       blocks,
       blocksByParent,
       data,
@@ -87,7 +92,24 @@ export function createTreeContext<T = unknown>() {
       DisplayKey,
       handleHover,
       ItemRenderer,
-    }
+      activeItem,
+    }), [
+        blocks,
+        blocksByParent,
+        data,
+        effectiveExpandedMap,
+        dispatchExpand,
+        hoverZone,
+        setHoverZone,
+        activeId,
+        activeItem,
+        setActiveId,
+        activeBlock,
+        isShiftHeld,
+        DisplayKey,
+        handleHover,
+        ItemRenderer,
+      ])
 
     return <TreeContext.Provider value={value}>{children}</TreeContext.Provider>
   }
@@ -110,6 +132,7 @@ interface TreeContextType<T> {
   DisplayKey: React.FC
   handleHover: (zoneId: string, parentId: string | null) => void
   ItemRenderer: ItemRenderer<T>
+  activeItem: T | null
 }
 
 type ItemRenderer<T> = (props: { id: string; content: T }) => JSX.Element | null

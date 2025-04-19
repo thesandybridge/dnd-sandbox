@@ -20,11 +20,13 @@ const SectionContainer = ({ block }: Props) => {
     dispatchExpand,
     data,
     hoverZone,
+    activeItem,
   } = useTreeContext()
 
   const children = useMemo(() => blocksByParent.get(block.id) ?? [], [block.id, blocksByParent])
   const isExpanded = !!expandedMap[block.id]
   const content = data?.get(block.id)
+  const isSection = activeItem ? activeItem.type === 'section' : false
 
   const {
     attributes,
@@ -77,14 +79,14 @@ const SectionContainer = ({ block }: Props) => {
         {!isExpanded && <div>{children.length} Item{children.length === 1 ? '' : 's'}</div>}
       </div>
 
-      {children.length === 0 && isExpanded && (
+      {children.length === 0 && isExpanded && !isSection && (
         <DropZone
           id={`into-${block.id}`}
           parentId={block.parentId}
           type="section"
         />
       )}
-      {!isExpanded && (
+      {!isExpanded && !isSection && (
         <DropZone
           id={`into-${block.id}`}
           parentId={block.parentId}
