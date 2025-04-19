@@ -1,10 +1,15 @@
 
 import Agenda from './components/Agenda';
-import { BlockProvider } from './providers/BlockProvider'
+import { Block, BlockProvider } from './providers/BlockProvider'
+
+const fetchedBlocks: Block[] = [
+  { id: '1', type: 'section', parentId: null },
+  { id: '2', type: 'topic', parentId: '1' },
+]
 
 export default function AgendaPage() {
   return (
-    <BlockProvider>
+    <BlockProvider initialBlocks={fetchedBlocks}>
       <Agenda />
     </BlockProvider>
   );
