@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment, memo } from 'react'
+import { Fragment, memo, useCallback } from 'react'
 import SectionContainer from './SectionContainer'
 import ItemWrapper from './ItemWrapper'
 import DropZone from './DropZone'
@@ -14,7 +14,9 @@ import {
   TouchSensor,
   useSensor,
   useSensors,
+  DragStartEvent,
 } from '@dnd-kit/core'
+import { useAgenda } from '@/app/providers/AgendaProvider'
 
 interface Props {
   parentId?: string | null
@@ -23,12 +25,15 @@ interface Props {
 const dndConfig = { collisionDetection: closestCenter }
 
 const TreeRenderer = ({ parentId = null }: Props) => {
+  const { moveItem } = useAgenda()
   const {
     blocksByParent,
-    handleDragStart,
-    handleDragEnd,
     activeBlock,
     agendaData,
+    setActiveId,
+    activeId,
+    hoverZone,
+    setHoverZone,
   } = useTreeContext()
 
   const sensors = useSensors(
@@ -36,6 +41,17 @@ const TreeRenderer = ({ parentId = null }: Props) => {
     useSensor(TouchSensor),
     useSensor(KeyboardSensor),
   )
+
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    setActiveId(event.active.id)
+  }, [setActiveId])
+
+  const handleDragEnd = useCallback(() => {
+    if (!activeId || !hoverZone) return
+    moveItem(activeId, hoverZone)
+    setActiveId(null)
+    setHoverZone(null)
+  }, [activeId, hoverZone, moveItem, setActiveId, setHoverZone])
 
   const items = blocksByParent.get(parentId) ?? []
   const indent = parentId

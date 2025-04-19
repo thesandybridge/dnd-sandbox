@@ -13,7 +13,6 @@ import expandReducer, { ExpandAction } from '@/app/reducers/expandReducer'
 import { Agenda, useAgenda } from '@/app/providers/AgendaProvider'
 import { BlockContent, useAgendaDetails } from '@/app/hooks/useAgendaDetails'
 import { useModifierKey } from '@/app/hooks/useModifierKey'
-import { DragStartEvent } from '@dnd-kit/core'
 
 interface TreeContextType {
   blocks: Agenda[]
@@ -29,8 +28,6 @@ interface TreeContextType {
   isShiftHeld: boolean
   DisplayKey: React.FC
   handleHover: (zoneId: string, parentId: string | null) => void
-  handleDragStart: (event: DragStartEvent) => void
-  handleDragEnd: () => void
 }
 
 const TreeContext = createContext<TreeContextType | null>(null)
@@ -42,7 +39,7 @@ export const useTreeContext = () => {
 }
 
 export function TreeProvider({ children }: { children: ReactNode }) {
-  const { blocks, moveItem } = useAgenda()
+  const { blocks } = useAgenda()
   const { data: agendaData } = useAgendaDetails(blocks)
   const [activeId, setActiveId] = useState<string | null>(null)
   const [hoverZone, setHoverZone] = useState<string | null>(null)
@@ -83,17 +80,6 @@ export function TreeProvider({ children }: { children: ReactNode }) {
     setHoverZone(zoneId)
   }, [activeId, blocks])
 
-  const handleDragStart = (event: DragStartEvent) => {
-    setActiveId(event.active.id as string)
-  }
-
-  const handleDragEnd = () => {
-    if (!activeId || !hoverZone) return
-    moveItem(activeId, hoverZone)
-    setActiveId(null)
-    setHoverZone(null)
-  }
-
   const value: TreeContextType = {
     blocks,
     blocksByParent,
@@ -108,8 +94,6 @@ export function TreeProvider({ children }: { children: ReactNode }) {
     isShiftHeld,
     DisplayKey,
     handleHover,
-    handleDragStart,
-    handleDragEnd
   }
 
   return <TreeContext.Provider value={value}>{children}</TreeContext.Provider>
