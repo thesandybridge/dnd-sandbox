@@ -1,11 +1,11 @@
 
 import Agenda from './components/Agenda';
-import { AgendaProvider } from './providers/AgendaProvider'
+import { BlockProvider } from './providers/BlockProvider'
 
 export default function AgendaPage() {
   return (
-    <AgendaProvider>
+    <BlockProvider>
       <Agenda />
-    </AgendaProvider>
+    </BlockProvider>
   );
 }

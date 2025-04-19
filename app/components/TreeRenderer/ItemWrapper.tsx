@@ -3,15 +3,15 @@
 import { memo } from "react"
 import Topic from "../Topic"
 import Objective from "../Objective"
-import { useAgenda } from "@/app/providers/AgendaProvider"
 import { useTreeContext } from "@/app/providers/TreeProvider"
+import { useBlocks } from "@/app/providers/BlockProvider"
 
 interface Props {
   id: string
 }
 
 const ItemWrapper = ({ id }: Props) => {
-  const { blockMap } = useAgenda()
+  const { blockMap } = useBlocks()
   const { data } = useTreeContext()
 
   const block = blockMap.get(id)

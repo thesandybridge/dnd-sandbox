@@ -1,5 +1,5 @@
 import type { UniqueIdentifier } from '@dnd-kit/core'
-import { Agenda } from '../providers/AgendaProvider'
+import { Block } from '../providers/BlockProvider'
 
 /**
  * Reparents and repositions a block within a flat tree structure
@@ -20,13 +20,13 @@ import { Agenda } from '../providers/AgendaProvider'
  * @returns A new Agenda array with the dragged block repositioned
  */
 export function reparentBlock(
-  blocks: Agenda[],
-  blockMap: Map<string, Agenda>,
-  childrenMap: Map<string | null, Agenda[]>,
+  blocks: Block[],
+  blockMap: Map<string, Block>,
+  childrenMap: Map<string | null, Block[]>,
   indexMap: Map<string, number>,
   activeId: UniqueIdentifier,
   hoverZone: string
-): Agenda[] {
+): Block[] {
   const dragged = blockMap.get(activeId.toString())
   if (!dragged) return blocks
 

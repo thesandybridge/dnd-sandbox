@@ -3,17 +3,17 @@
 import { Fragment, memo, useCallback, useMemo } from 'react'
 import ItemWrapper from './ItemWrapper'
 import DropZone from './DropZone'
-import { useAgenda, Agenda } from '@/app/providers/AgendaProvider'
 import { useTreeContext } from '@/app/providers/TreeProvider'
 import { useDraggable } from '@dnd-kit/core'
 import Section from '../Section'
+import { Block, useBlocks } from '@/app/providers/BlockProvider'
 
 interface Props {
-  block: Agenda
+  block: Block
 }
 
 const SectionContainer = ({ block }: Props) => {
-  const { createItem, deleteItem } = useAgenda()
+  const { createItem, deleteItem } = useBlocks()
   const {
     blocksByParent,
     expandedMap,

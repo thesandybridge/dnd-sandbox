@@ -1,14 +1,14 @@
 'use client'
 
 import { memo } from "react"
-import { useAgenda } from '../providers/AgendaProvider'
 import { TreeProvider } from '../providers/TreeProvider'
 import TreeRenderer from "./TreeRenderer"
 import { useAgendaDetails } from "../hooks/useAgendaDetails"
 import { useTreeContext } from "../providers/TreeProvider"
+import { useBlocks } from "../providers/BlockProvider"
 
 const AgendaControls = () => {
-  const { createItem } = useAgenda()
+  const { createItem } = useBlocks()
   const { DisplayKey, isShiftHeld } = useTreeContext()
 
   return (
@@ -22,7 +22,7 @@ const AgendaControls = () => {
 }
 
 const Agenda = () => {
-  const { blocks } = useAgenda()
+  const { blocks } = useBlocks()
   const { data } = useAgendaDetails(blocks)
   if (!data) return null
   return (

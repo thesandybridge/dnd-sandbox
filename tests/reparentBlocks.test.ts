@@ -1,10 +1,9 @@
-// tests/reparentBlock.test.ts
+import { Block } from '@/app/providers/BlockProvider'
 import { reparentBlock } from '@/app/utils/blocks'
-import type { Agenda } from '@/app/page'
 
-function createMaps(blocks: Agenda[]) {
-  const blockMap = new Map<string, Agenda>()
-  const childrenMap = new Map<string | null, Agenda[]>()
+function createMaps(blocks: Block[]) {
+  const blockMap = new Map<string, Block>()
+  const childrenMap = new Map<string | null, Block[]>()
   const indexMap = new Map<string, number>()
 
   blocks.forEach((block, i) => {
@@ -19,7 +18,7 @@ function createMaps(blocks: Agenda[]) {
 }
 
 describe('reparentBlock', () => {
-  const base: Agenda[] = [
+  const base: Block[] = [
     { id: '1', type: 'section', parentId: null },
     { id: '2', type: 'topic', parentId: '1' },
     { id: '3', type: 'topic', parentId: null },

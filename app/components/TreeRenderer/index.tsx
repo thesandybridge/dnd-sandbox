@@ -16,7 +16,7 @@ import {
   useSensors,
   DragStartEvent,
 } from '@dnd-kit/core'
-import { useAgenda } from '@/app/providers/AgendaProvider'
+import { useBlocks } from '@/app/providers/BlockProvider'
 
 interface Props {
   parentId?: string | null
@@ -25,7 +25,7 @@ interface Props {
 const dndConfig = { collisionDetection: closestCenter }
 
 const TreeRenderer = ({ parentId = null }: Props) => {
-  const { moveItem } = useAgenda()
+  const { moveItem } = useBlocks()
   const {
     blocksByParent,
     activeBlock,

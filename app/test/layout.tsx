@@ -1,9 +1,9 @@
-import { AgendaProvider } from '@/app/providers/AgendaProvider'
+import { BlockProvider } from "../providers/BlockProvider";
 
 export default function TestAgendaLayout({ children }: { children: React.ReactNode }) {
   return (
-    <AgendaProvider>
+    <BlockProvider>
       {children}
-    </AgendaProvider>
+    </BlockProvider>
   )
 }

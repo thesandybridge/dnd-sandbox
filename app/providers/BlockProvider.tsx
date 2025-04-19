@@ -13,35 +13,35 @@ import { v4 as uuidv4 } from 'uuid'
 import type { UniqueIdentifier } from '@dnd-kit/core'
 import { useQueryClient } from '@tanstack/react-query'
 import { BlockContent } from '../hooks/useAgendaDetails'
-import { agendaReducer } from '../reducers/agendaReducer'
+import { blockReducer } from '../reducers/blockReducer'
 
-export interface Agenda {
+export interface Block {
   id: string,
   type: 'section' | 'topic' | 'objective',
   parentId: string | null
   testId?: string
 }
 
-interface AgendaContextValue {
-  blocks: Agenda[];
-  blockMap: Map<string, Agenda>;
-  childrenMap: Map<string | null, Agenda[]>;
+interface BlockContextValue {
+  blocks: Block[];
+  blockMap: Map<string, Block>;
+  childrenMap: Map<string | null, Block[]>;
   indexMap: Map<string, number>;
-  createItem: (type: Agenda['type'], parentId?: string | null) => Agenda;
+  createItem: (type: Block['type'], parentId?: string | null) => Block;
   deleteItem: (id: string) => void;
   moveItem: (activeId: UniqueIdentifier, hoverZone: string) => void;
-  setAll: (blocks: Agenda[]) => void;
+  setAll: (blocks: Block[]) => void;
 }
 
-const AgendaContext = createContext<AgendaContextValue | undefined>(undefined);
+const BlockContext = createContext<BlockContextValue | undefined>(undefined);
 
-export function AgendaProvider({ children }: { children: ReactNode }) {
+export function BlockProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient()
-  const [blocks, dispatch] = useReducer(agendaReducer, []);
+  const [blocks, dispatch] = useReducer(blockReducer, []);
 
   const { blockMap, childrenMap, indexMap } = useMemo(() => {
-    const blockMap = new Map<string, Agenda>()
-    const childrenMap = new Map<string | null, Agenda[]>()
+    const blockMap = new Map<string, Block>()
+    const childrenMap = new Map<string | null, Block[]>()
     const indexMap = new Map<string, number>()
 
     for (let i = 0; i < blocks.length; i++) {
@@ -58,11 +58,11 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
   }, [blocks])
 
   const createItem = useCallback((
-    type: Agenda['type'],
+    type: Block['type'],
     parentId: string | null = null,
     testId?: string
-  ): Agenda => {
-      const newItem: Agenda = {
+  ): Block => {
+      const newItem: Block = {
         id: uuidv4(),
         type,
         parentId,
@@ -135,7 +135,7 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'MOVE_ITEM', payload: { activeId, hoverZone } });
   }, [])
 
-  const setAll = useCallback((all: Agenda[]) => {
+  const setAll = useCallback((all: Block[]) => {
     dispatch({ type: 'SET_ALL', payload: all });
   }, [])
 
@@ -151,14 +151,14 @@ export function AgendaProvider({ children }: { children: ReactNode }) {
   }), [blocks, blockMap, childrenMap, indexMap, createItem, deleteItem, moveItem, setAll])
 
   return (
-    <AgendaContext.Provider value={contextValue}>
+    <BlockContext.Provider value={contextValue}>
       {children}
-    </AgendaContext.Provider>
+    </BlockContext.Provider>
   );
 }
 
-export function useAgenda() {
-  const ctx = useContext(AgendaContext)
-  if (!ctx) throw new Error('useAgenda must be inside AgendaProvider')
+export function useBlocks() {
+  const ctx = useContext(BlockContext)
+  if (!ctx) throw new Error('useBlocks must be inside BlockProvider')
   return ctx
 }

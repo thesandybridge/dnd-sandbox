@@ -1,8 +1,8 @@
-import { agendaReducer } from '@/app/reducers/agendaReducer'
-import type { Agenda } from '@/app/page'
+import { Block } from "@/app/providers/BlockProvider"
+import { blockReducer } from "@/app/reducers/blockReducer"
 
-function createLargeAgenda(sectionCount: number, topicsPerSection = 10): Agenda[] {
-  const blocks: Agenda[] = []
+function createLargeBlock(sectionCount: number, topicsPerSection = 10): Block[] {
+  const blocks: Block[] = []
   for (let i = 0; i < sectionCount; i++) {
     const sectionId = `section-${i}`
     blocks.push({ id: sectionId, type: 'section', parentId: null })
@@ -22,7 +22,7 @@ function getRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]
 }
 
-describe('agendaReducer performance under randomized MOVE_ITEM', () => {
+describe('blockReducer performance under randomized MOVE_ITEM', () => {
   const testScenarios = [
     { sectionCount: 100, topicsPerSection: 10, maxMs: 500 },
     { sectionCount: 500, topicsPerSection: 10, maxMs: 7000 },
@@ -34,7 +34,7 @@ describe('agendaReducer performance under randomized MOVE_ITEM', () => {
       const topicCount = sectionCount * topicsPerSection
       const movesToPerform = topicCount
 
-      let state = createLargeAgenda(sectionCount, topicsPerSection)
+      let state = createLargeBlock(sectionCount, topicsPerSection)
 
       const topicIds = state.filter(b => b.type === 'topic').map(b => b.id)
       const dropZones = topicIds.map(id => `after-${id}`)
@@ -50,7 +50,7 @@ describe('agendaReducer performance under randomized MOVE_ITEM', () => {
           hoverZone = getRandom(dropZones)
         }
 
-        state = agendaReducer(state, {
+        state = blockReducer(state, {
           type: 'MOVE_ITEM',
           payload: { activeId, hoverZone },
         })

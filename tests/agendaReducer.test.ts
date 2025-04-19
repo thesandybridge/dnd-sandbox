@@ -1,44 +1,44 @@
-import type { Agenda } from '@/app/page'
-import { agendaReducer } from '@/app/reducers/agendaReducer'
+import { Block } from '@/app/providers/BlockProvider'
+import { blockReducer } from '@/app/reducers/blockReducer'
 
-describe('agendaReducer', () => {
+describe('blockReducer', () => {
   it('adds an item', () => {
-    const state: Agenda[] = []
-    const newItem: Agenda = { id: '1', type: 'section', parentId: null }
-    const next = agendaReducer(state, { type: 'ADD_ITEM', payload: newItem })
+    const state: Block[] = []
+    const newItem: Block = { id: '1', type: 'section', parentId: null }
+    const next = blockReducer(state, { type: 'ADD_ITEM', payload: newItem })
 
     expect(next).toHaveLength(1)
     expect(next[0]).toEqual(newItem)
   })
 
   it('deletes a block and its children', () => {
-    const state: Agenda[] = [
+    const state: Block[] = [
       { id: '1', type: 'section', parentId: null },
       { id: '2', type: 'topic', parentId: '1' },
       { id: '3', type: 'topic', parentId: null },
     ]
-    const next = agendaReducer(state, { type: 'DELETE_ITEM', payload: { id: '1' } })
+    const next = blockReducer(state, { type: 'DELETE_ITEM', payload: { id: '1' } })
 
     expect(next).toHaveLength(1)
     expect(next[0].id).toBe('3')
   })
 
   it('sets all blocks', () => {
-    const newState: Agenda[] = [
+    const newState: Block[] = [
       { id: 'a', type: 'section', parentId: null }
     ]
-    const result = agendaReducer([], { type: 'SET_ALL', payload: newState })
+    const result = blockReducer([], { type: 'SET_ALL', payload: newState })
 
     expect(result).toEqual(newState)
   })
 
   it('moves a topic into a section', () => {
-    const state: Agenda[] = [
+    const state: Block[] = [
       { id: '1', type: 'section', parentId: null },
       { id: '2', type: 'topic', parentId: null }
     ]
 
-    const next = agendaReducer(state, {
+    const next = blockReducer(state, {
       type: 'MOVE_ITEM',
       payload: {
         activeId: '2',

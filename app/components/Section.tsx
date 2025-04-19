@@ -7,10 +7,10 @@ import { useQueryClient } from '@tanstack/react-query'
 
 import { BlockContent } from '../hooks/useAgendaDetails'
 import { SectionContent } from '../hooks/useAgendaDetails'
-import { Agenda } from '../providers/AgendaProvider'
+import { Block } from '../providers/BlockProvider'
 
 interface Props {
-  block: Agenda
+  block: Block
   content?: SectionContent
 }
 

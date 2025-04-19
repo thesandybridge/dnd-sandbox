@@ -9,7 +9,7 @@ import {
 } from 'react'
 import expandReducer, { ExpandAction } from '@/app/reducers/expandReducer'
 import { useModifierKey } from '@/app/hooks/useModifierKey'
-import { Agenda, useAgenda } from '@/app/providers/AgendaProvider'
+import { Block, useBlocks } from './BlockProvider'
 
 export function createTreeContext<T>() {
   const TreeContext = createContext<TreeContextType<T> | null>(null)
@@ -21,7 +21,7 @@ export function createTreeContext<T>() {
   }
 
   function TreeProvider({ children, data }: { children: ReactNode; data: Map<string, T> }) {
-    const { blocks } = useAgenda()
+    const { blocks } = useBlocks()
     const [activeId, setActiveId] = useState<string | null>(null)
     const [hoverZone, setHoverZone] = useState<string | null>(null)
     const [expandedMap, dispatchExpand] = useReducer(expandReducer, {})
@@ -46,7 +46,7 @@ export function createTreeContext<T>() {
     )
 
     const blocksByParent = useMemo(() => {
-      const map = new Map<string | null, Agenda[]>()
+      const map = new Map<string | null, Block[]>()
       for (const block of blocks) {
         const list = map.get(block.parentId ?? null) ?? []
         map.set(block.parentId ?? null, [...list, block])
@@ -87,8 +87,8 @@ export function createTreeContext<T>() {
 }
 
 interface TreeContextType<T> {
-  blocks: Agenda[]
-  blocksByParent: Map<string | null, Agenda[]>
+  blocks: Block[]
+  blocksByParent: Map<string | null, Block[]>
   data: Map<string, T>
   expandedMap: Record<string, boolean>
   dispatchExpand: React.Dispatch<ExpandAction>
@@ -96,7 +96,7 @@ interface TreeContextType<T> {
   setHoverZone: (z: string | null) => void
   activeId: string | null
   setActiveId: (id: string | null) => void
-  activeBlock: Agenda | null
+  activeBlock: Block | null
   isShiftHeld: boolean
   DisplayKey: React.FC
   handleHover: (zoneId: string, parentId: string | null) => void

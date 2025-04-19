@@ -2,12 +2,12 @@
 
 import Agenda from '@/app/components/Agenda'
 import { useEffect } from 'react'
-import { useAgenda } from '@/app/providers/AgendaProvider'
 import { useSearchParams } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
+import { useBlocks } from '../providers/BlockProvider'
 
 export default function TestAgenda() {
-  const { setAll } = useAgenda()
+  const { setAll } = useBlocks()
   const query = useSearchParams()
   const queryClient = useQueryClient()
 

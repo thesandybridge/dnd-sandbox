@@ -1,14 +1,14 @@
 import { UniqueIdentifier } from "@dnd-kit/core";
 import { reparentBlock } from "../utils/blocks";
-import { Agenda } from "../providers/AgendaProvider";
+import { Block } from "../providers/BlockProvider";
 
-export type AgendaAction =
-| { type: 'ADD_ITEM';    payload: Agenda}
+export type BlockAction =
+| { type: 'ADD_ITEM';    payload: Block}
 | { type: 'DELETE_ITEM'; payload: { id: string } }
-| { type: 'SET_ALL';     payload: Agenda[] }
+| { type: 'SET_ALL';     payload: Block[] }
 | { type: 'MOVE_ITEM';   payload: { activeId: UniqueIdentifier; hoverZone: string } }
 
-export function agendaReducer(state: Agenda[], action: AgendaAction): Agenda[] {
+export function blockReducer(state: Block[], action: BlockAction): Block[] {
   switch (action.type) {
     case 'ADD_ITEM':
       return [...state, action.payload];
@@ -29,8 +29,8 @@ export function agendaReducer(state: Agenda[], action: AgendaAction): Agenda[] {
     case 'SET_ALL':
       return action.payload;
     case 'MOVE_ITEM': {
-      const blockMap = new Map<string, Agenda>()
-      const childrenMap = new Map<string | null, Agenda[]>()
+      const blockMap = new Map<string, Block>()
+      const childrenMap = new Map<string | null, Block[]>()
       const indexMap = new Map<string, number>()
 
       for (let i = 0; i < state.length; i++) {

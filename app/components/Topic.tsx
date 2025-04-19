@@ -7,16 +7,16 @@ import { useQueryClient } from '@tanstack/react-query'
 
 import { BlockContent, TopicContent } from '../hooks/useAgendaDetails'
 import { useDraggable } from '@dnd-kit/core'
-import { useAgenda, Agenda } from '../providers/AgendaProvider'
+import { Block, useBlocks } from '../providers/BlockProvider'
 
 interface Props {
-  block: Agenda
+  block: Block
   content?: TopicContent
 }
 
 const Topic = ({ block, content }: Props) => {
   const queryClient = useQueryClient()
-  const { deleteItem } = useAgenda()
+  const { deleteItem } = useBlocks()
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: block.id
   });

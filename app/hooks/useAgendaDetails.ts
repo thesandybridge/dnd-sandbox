@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { Agenda } from '../providers/AgendaProvider'
+import { Block } from '../providers/BlockProvider'
 
 export type SectionContent = {
   type: 'section'
@@ -23,7 +23,7 @@ export type BlockContent = SectionContent | TopicContent | ObjectiveContent
 
 const mockContentStore = new Map<string, BlockContent>()
 
-export const useAgendaDetails = (blocks: Agenda[]) => {
+export const useAgendaDetails = (blocks: Block[]) => {
   return useQuery({
     queryKey: ['agenda-details'],
     queryFn: async () => {
