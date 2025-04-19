@@ -11,7 +11,7 @@ import expandReducer, { ExpandAction } from '@/app/reducers/expandReducer'
 import { useModifierKey } from '@/app/hooks/useModifierKey'
 import { Block, useBlocks } from './BlockProvider'
 
-export function createTreeContext<T>() {
+export function createTreeContext<T = unknown>() {
   const TreeContext = createContext<TreeContextType<T> | null>(null)
 
   const useTreeContext = () => {
@@ -20,7 +20,15 @@ export function createTreeContext<T>() {
     return ctx
   }
 
-  function TreeProvider({ children, data }: { children: ReactNode; data: Map<string, T> }) {
+  function TreeProvider({
+    children,
+    data,
+    ItemRenderer,
+  }: {
+      children: ReactNode;
+      data: Map<string, T>;
+      ItemRenderer: ItemRenderer<T>
+    }): JSX.Element {
     const { blocks } = useBlocks()
     const [activeId, setActiveId] = useState<string | null>(null)
     const [hoverZone, setHoverZone] = useState<string | null>(null)
@@ -78,6 +86,7 @@ export function createTreeContext<T>() {
       isShiftHeld,
       DisplayKey,
       handleHover,
+      ItemRenderer,
     }
 
     return <TreeContext.Provider value={value}>{children}</TreeContext.Provider>
@@ -100,4 +109,7 @@ interface TreeContextType<T> {
   isShiftHeld: boolean
   DisplayKey: React.FC
   handleHover: (zoneId: string, parentId: string | null) => void
+  ItemRenderer: ItemRenderer<T>
 }
+
+type ItemRenderer<T> = (props: { id: string; content: T }) => JSX.Element | null

@@ -3,9 +3,11 @@
 import { memo } from "react"
 import { TreeProvider } from '../providers/TreeProvider'
 import TreeRenderer from "./TreeRenderer"
-import { useAgendaDetails } from "../hooks/useAgendaDetails"
+import { useAgendaDetails, BlockContent } from "../hooks/useAgendaDetails"
 import { useTreeContext } from "../providers/TreeProvider"
 import { useBlocks } from "../providers/BlockProvider"
+import Topic from "./Topic"
+import Objective from "./Objective"
 
 const AgendaControls = () => {
   const { createItem } = useBlocks()
@@ -21,12 +23,32 @@ const AgendaControls = () => {
   )
 }
 
+const ItemRenderer = ({ id, content }: { id: string, content: BlockContent }) => {
+  const { blockMap } = useBlocks()
+  const block = blockMap.get(id)
+  if (!block) return null
+
+  switch (content.type) {
+    case "topic":
+      return <Topic block={block} content={content} />
+    case "objective":
+      return <Objective block={block} content={content} />
+    default:
+      return null
+  }
+}
+
 const Agenda = () => {
   const { blocks } = useBlocks()
   const { data } = useAgendaDetails(blocks)
+
   if (!data) return null
+
   return (
-    <TreeProvider data={data}>
+    <TreeProvider
+      data={data}
+      ItemRenderer={ItemRenderer}
+    >
       <div className="p-8 max-w-xl mx-auto">
         <h1 className="text-2xl font-semibold mb-6">Agenda DnD Demo</h1>
         <AgendaControls />
