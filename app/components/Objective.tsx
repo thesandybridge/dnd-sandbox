@@ -5,10 +5,9 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { useQueryClient } from '@tanstack/react-query'
 
-import { Agenda } from '../page'
 import { BlockContent, ObjectiveContent } from '../hooks/useAgendaDetails'
 import { useDraggable } from '@dnd-kit/core'
-import { useAgenda } from '../providers/AgendaProvider'
+import { useAgenda, Agenda } from '../providers/AgendaProvider'
 
 interface Props {
   block: Agenda

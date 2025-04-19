@@ -1,5 +1,5 @@
-// src/context/AgendaContext.tsx
 'use client'
+
 import React, {
   createContext,
   useContext,
@@ -8,12 +8,19 @@ import React, {
   useMemo,
   useCallback
 } from 'react'
+
 import { v4 as uuidv4 } from 'uuid'
 import type { UniqueIdentifier } from '@dnd-kit/core'
-import { Agenda } from '../page'
 import { useQueryClient } from '@tanstack/react-query'
 import { BlockContent } from '../hooks/useAgendaDetails'
 import { agendaReducer } from '../reducers/agendaReducer'
+
+export interface Agenda {
+  id: string,
+  type: 'section' | 'topic' | 'objective',
+  parentId: string | null
+  testId?: string
+}
 
 interface AgendaContextValue {
   blocks: Agenda[];

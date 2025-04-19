@@ -1,5 +1,5 @@
 import type { UniqueIdentifier } from '@dnd-kit/core'
-import { Agenda } from '../page';
+import { Agenda } from '../providers/AgendaProvider'
 
 /**
  * Reparents and repositions a block within a flat tree structure

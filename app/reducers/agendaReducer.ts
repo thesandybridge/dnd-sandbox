@@ -1,9 +1,9 @@
 import { UniqueIdentifier } from "@dnd-kit/core";
-import { Agenda } from "../page";
 import { reparentBlock } from "../utils/blocks";
+import { Agenda } from "../providers/AgendaProvider";
 
 export type AgendaAction =
-| { type: 'ADD_ITEM';    payload: Agenda }
+| { type: 'ADD_ITEM';    payload: Agenda}
 | { type: 'DELETE_ITEM'; payload: { id: string } }
 | { type: 'SET_ALL';     payload: Agenda[] }
 | { type: 'MOVE_ITEM';   payload: { activeId: UniqueIdentifier; hoverZone: string } }

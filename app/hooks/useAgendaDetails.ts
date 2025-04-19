@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { Agenda } from '../page'
+import { Agenda } from '../providers/AgendaProvider'
 
 export type SectionContent = {
   type: 'section'

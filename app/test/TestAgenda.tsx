@@ -52,5 +52,5 @@ export default function TestAgenda() {
     queryClient.setQueryData(['agenda-details'], detailsMap)
   }, [setAll, query, queryClient])
 
-  return <Agenda defaultExpandAll />
+  return <Agenda />
 }
