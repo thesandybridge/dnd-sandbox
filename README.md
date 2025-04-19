@@ -5,6 +5,7 @@ This is a performant, testable drag-and-drop agenda editor built with [@dnd-kit/
 - Nested, sortable blocks (`section`, `topic`, `objective`)
 - Modifier key interactions (<kbd>Shift</kbd> to collapse/expand sections)
 - Accessible drag handles with overlays
+- User-defined block content via a generic `TreeProvider`
 - Deep testing: unit, performance, and E2E
 
 ---
@@ -17,6 +18,43 @@ pnpm dev
 ```
 
 Visit [http://localhost:3000](http://localhost:3000)
+
+---
+
+## 🧠 Architecture
+
+This editor is built around two key providers:
+
+### `BlockProvider`
+
+Manages tree structure and mutation logic:
+
+- Block creation, deletion, and movement
+- Internal maps (`blockMap`, `childrenMap`, `indexMap`) for fast lookups
+- Reducer-based state model
+
+You can pass initial data via:
+
+```tsx
+<BlockProvider initialBlocks={myBlocks}>
+  <Agenda />
+</BlockProvider>
+```
+
+### `TreeProvider<T>`
+
+Generic context for rendering block content:
+
+- Accepts a `Map<string, T>` of block content
+- Renders items via a user-supplied `ItemRenderer`
+- Provides collapse state, DnD state, and keyboard modifiers
+
+```tsx
+<TreeProvider
+  data={myContentMap}
+  ItemRenderer={({ id, content }) => <MyCustomItem id={id} content={content} />}
+/>
+```
 
 ---
 
@@ -53,16 +91,6 @@ Tests generate screenshots in `/screenshots`.
 
 ---
 
-## 🧠 Design Notes
-
-- State lives in `AgendaProvider`
-- Items are rendered in a flattened tree via `TreeRenderer`
-- Shift modifier key toggles collapsed state of sections
-- Drag overlays reflect real block content
-- Performance is capped under 3ms per move at 10,000+ items
-
----
-
 ## 📁 File Structure
 
 ```
@@ -72,9 +100,10 @@ app/
   │   ├── TreeRenderer.tsx
   │   └── ...
   ├── providers/
-  │   └── AgendaProvider.tsx
+  │   ├── BlockProvider.tsx
+  │   └── TreeProvider.tsx
   ├── reducers/
-  │   ├── agendaReducer.ts
+  │   ├── blockReducer.ts
   │   └── expandReducer.ts
   ├── hooks/
   │   ├── useModifierKey.ts
@@ -90,7 +119,6 @@ app/
 - [ ] Add keyboard accessibility for DnD
 - [ ] Virtualize block rendering (e.g., `react-virtual`)
 - [ ] Real API layer + persistence
+- [ ] Publish as a reusable component library
 
 ---
-
-PRs and forks welcome.
