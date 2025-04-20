@@ -93,9 +93,18 @@ export function createBlockContext<TBlock extends Block = Block>() {
       dispatch({ type: 'DELETE_ITEM', payload: { id } })
     }, [blocks])
 
-    const moveItem = useCallback((activeId: UniqueIdentifier, hoverZone: string) => {
-      dispatch({ type: 'MOVE_ITEM', payload: { activeId, hoverZone } })
-    }, [])
+    const moveItem = useCallback((activeId, hoverZone) => {
+      dispatch({
+        type: 'MOVE_ITEM',
+        payload: {
+          activeId,
+          hoverZone,
+          blockMap,
+          childrenMap,
+          indexMap,
+        },
+      })
+    }, [blockMap, childrenMap, indexMap])
 
     const setAll = useCallback((all: TBlock[]) => {
       dispatch({ type: 'SET_ALL', payload: all })
