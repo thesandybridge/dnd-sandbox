@@ -42,14 +42,19 @@ export function blockReducer<T extends BaseBlock>(
     case 'MOVE_ITEM': {
       const { activeId, hoverZone, blockMap, childrenMap, indexMap } = action.payload
 
-      return reparentBlock<T>(
+      const newState = reparentBlock<T>(
         state,
         blockMap,
         childrenMap,
         indexMap,
         activeId,
         hoverZone
-      );
+      )
+
+      return newState.map((block, i) => ({
+        ...block,
+        order: i,
+      }))
     }
 
     default:
