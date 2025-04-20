@@ -84,9 +84,27 @@ export function reparentBlock<T extends BaseBlock>(
     order: insertIndex,
   }
 
-  return [
+  const newList = [
     ...remaining.slice(0, insertIndex),
     moved,
     ...remaining.slice(insertIndex)
   ]
+
+  // Reassign order per parent group
+  const reordered: T[] = []
+  const siblingsByParent = new Map<string | null, T[]>()
+
+  for (const block of newList) {
+    const key = block.parentId ?? null
+    const siblings = siblingsByParent.get(key) ?? []
+    siblingsByParent.set(key, [...siblings, block])
+  }
+
+  for (const block of newList) {
+    const siblings = siblingsByParent.get(block.parentId ?? null) || []
+    const order = siblings.findIndex(sib => sib.id === block.id)
+    reordered.push({ ...block, order })
+  }
+
+  return reordered
 }
