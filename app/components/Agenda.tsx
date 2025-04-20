@@ -39,7 +39,11 @@ const ItemRenderer = ({ id, content }: { id: string, content: BlockContent }) =>
   }
 }
 
-const Agenda = () => {
+const Agenda = ({
+  expandAll
+}: {
+  expandAll?: boolean,
+}) => {
   const { blocks } = useBlocks()
   const { data } = useAgendaDetails(blocks)
   useSyncAgendaContent()
@@ -49,6 +53,7 @@ const Agenda = () => {
     <TreeProvider
       data={data}
       ItemRenderer={ItemRenderer}
+      expandAll={expandAll}
     >
       <div className="p-8 max-w-xl mx-auto">
         <h1 className="text-2xl font-semibold mb-6">Agenda DnD Demo</h1>

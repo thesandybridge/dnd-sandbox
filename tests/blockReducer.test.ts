@@ -1,6 +1,22 @@
 import { Block } from '@/app/types/block'
 import { blockReducer } from '@/app/reducers/blockReducer'
 
+function buildMaps(blocks: Block[]) {
+  const blockMap = new Map<string, Block>()
+  const childrenMap = new Map<string | null, Block[]>()
+  const indexMap = new Map<string, number>()
+
+  blocks.forEach((block, index) => {
+    blockMap.set(block.id, block)
+    indexMap.set(block.id, index)
+    const key = block.parentId ?? null
+    const children = childrenMap.get(key) ?? []
+    childrenMap.set(key, [...children, block])
+  })
+
+  return { blockMap, childrenMap, indexMap }
+}
+
 describe('blockReducer', () => {
   it('adds an item', () => {
     const state: Block[] = []
@@ -38,11 +54,16 @@ describe('blockReducer', () => {
       { id: '2', type: 'topic', parentId: null }
     ]
 
+    const { blockMap, childrenMap, indexMap } = buildMaps(state)
+
     const next = blockReducer(state, {
       type: 'MOVE_ITEM',
       payload: {
         activeId: '2',
-        hoverZone: 'into-1'
+        hoverZone: 'into-1',
+        blockMap,
+        childrenMap,
+        indexMap,
       }
     })
 

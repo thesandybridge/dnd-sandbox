@@ -18,6 +18,22 @@ function createLargeBlock(sectionCount: number, topicsPerSection = 10): Block[] 
   return blocks
 }
 
+function buildMaps(blocks: Block[]) {
+  const blockMap = new Map<string, Block>()
+  const childrenMap = new Map<string | null, Block[]>()
+  const indexMap = new Map<string, number>()
+
+  blocks.forEach((block, index) => {
+    blockMap.set(block.id, block)
+    indexMap.set(block.id, index)
+    const key = block.parentId ?? null
+    const children = childrenMap.get(key) ?? []
+    childrenMap.set(key, [...children, block])
+  })
+
+  return { blockMap, childrenMap, indexMap }
+}
+
 function getRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]
 }
@@ -45,14 +61,21 @@ describe('blockReducer performance under randomized MOVE_ITEM', () => {
         const activeId = getRandom(topicIds)
         let hoverZone = getRandom(dropZones)
 
-        // Avoid no-op
         while (hoverZone === `after-${activeId}`) {
           hoverZone = getRandom(dropZones)
         }
 
+        const { blockMap, childrenMap, indexMap } = buildMaps(state)
+
         state = blockReducer(state, {
           type: 'MOVE_ITEM',
-          payload: { activeId, hoverZone },
+          payload: {
+            activeId,
+            hoverZone,
+            blockMap,
+            childrenMap,
+            indexMap,
+          }
         })
       }
 

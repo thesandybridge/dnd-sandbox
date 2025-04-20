@@ -1,9 +1,12 @@
-import { BlockProvider } from "../providers/BlockProvider";
+import { Suspense } from "react";
+import TestAgendaLayout from "./TestAgenda";
 
-export default function TestAgendaLayout({ children }: { children: React.ReactNode }) {
+export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <BlockProvider>
-      {children}
-    </BlockProvider>
+    <Suspense fallback={<div>Loading test agenda...</div>}>
+      <TestAgendaLayout>
+        {children}
+      </TestAgendaLayout>
+    </Suspense>
   )
 }

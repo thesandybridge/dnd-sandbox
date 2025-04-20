@@ -1,56 +1,45 @@
 'use client'
 
-import Agenda from '@/app/components/Agenda'
-import { useEffect } from 'react'
+import { BlockProvider } from "../providers/BlockProvider"
 import { useSearchParams } from 'next/navigation'
-import { useQueryClient } from '@tanstack/react-query'
-import { useBlocks } from '../providers/BlockProvider'
+import { useMemo } from "react"
+import { Block } from "../types/block"
 
-export default function TestAgenda() {
-  const { setAll } = useBlocks()
+export default function TestAgendaLayout({ children }: { children: React.ReactNode }) {
   const query = useSearchParams()
-  const queryClient = useQueryClient()
 
-  useEffect(() => {
-    const numSections = parseInt(query.get('sections') ?? '10', 10)
-    const numTopics = parseInt(query.get('topics') ?? '10', 10)
+  const initialBlocks: Block[] = useMemo(() => {
+    const sections = parseInt(query.get('sections') ?? '5', 10)
+    const topics = parseInt(query.get('topics') ?? '5', 10)
 
-    const testBlocks = []
-    const detailsMap = new Map()
+    const blocks: Block[] = []
 
-    for (let i = 0; i < numSections; i++) {
+    for (let i = 0; i < sections; i++) {
       const sectionId = `section-${i}`
-      testBlocks.push({
+      blocks.push({
         id: sectionId,
-        type: 'section' as const,
-        parentId: null,
-        testId: sectionId
-      })
-      detailsMap.set(sectionId, {
         type: 'section',
-        title: `Section ${i}`,
-        summary: ''
+        parentId: null,
+        testId: sectionId,
       })
 
-      for (let j = 0; j < numTopics; j++) {
+      for (let j = 0; j < topics; j++) {
         const topicId = `topic-${i}-${j}`
-        testBlocks.push({
+        blocks.push({
           id: topicId,
-          type: 'topic' as const,
-          parentId: sectionId,
-          testId: topicId
-        })
-        detailsMap.set(topicId, {
           type: 'topic',
-          title: `Topic ${i}-${j}`,
-          description: ''
+          parentId: sectionId,
+          testId: topicId,
         })
       }
     }
 
-    setAll(testBlocks)
-    queryClient.setQueryData(['agenda-details'], detailsMap)
-  }, [setAll, query, queryClient])
+    return blocks
+  }, [query])
 
-  return <Agenda />
+  return (
+    <BlockProvider initialBlocks={initialBlocks}>
+      {children}
+    </BlockProvider>
+  )
 }

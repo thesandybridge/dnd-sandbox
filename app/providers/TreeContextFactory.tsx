@@ -28,15 +28,29 @@ export function createTreeContext<TContent = unknown, TBlock extends Block = Blo
       children,
       data,
       ItemRenderer,
+      expandAll,
     }: {
-      children: ReactNode
-      data: Map<string, TContent>
-      ItemRenderer: ItemRenderer<TContent>
-    }) => {
+        children: ReactNode
+        data: Map<string, TContent>
+        ItemRenderer: ItemRenderer<TContent>
+        expandAll?: boolean
+      }) => {
       const { blocks } = useBlocks()
       const [activeId, setActiveId] = useState<string | null>(null)
       const [hoverZone, setHoverZone] = useState<string | null>(null)
-      const [expandedMap, dispatchExpand] = useReducer(expandReducer, {})
+
+      const initialExpanded = useMemo(() => {
+        if (expandAll) {
+          const map: Record<string, boolean> = {}
+          blocks.forEach(b => {
+            if (b.type === 'section') map[b.id] = true
+          })
+          return map
+        }
+        return {}
+      }, [blocks, expandAll])
+
+      const [expandedMap, dispatchExpand] = useReducer(expandReducer,initialExpanded)
 
       const { pressed: isShiftHeld, DisplayKey } = useModifierKey('Shift')
 
@@ -78,7 +92,7 @@ export function createTreeContext<TContent = unknown, TBlock extends Block = Blo
         [activeId, blocks]
       )
 
-      const value: TreeContextType<TContent, TBlock> = {
+      const value: TreeContextType<TContent, TBlock> = useMemo(() => ({
         blocks: blocks as TBlock[],
         blocksByParent,
         data,
@@ -94,7 +108,8 @@ export function createTreeContext<TContent = unknown, TBlock extends Block = Blo
         handleHover,
         ItemRenderer,
         activeItem,
-      }
+        expandAll,
+      }), [DisplayKey, ItemRenderer, activeBlock, activeId, activeItem, blocks, blocksByParent, data, effectiveExpandedMap, expandAll, handleHover, hoverZone, isShiftHeld])
 
       return <TreeContext.Provider value={value}>{children}</TreeContext.Provider>
     }
@@ -121,6 +136,7 @@ interface TreeContextType<T, TBlock extends Block> {
   handleHover: (zoneId: string, parentId: string | null) => void
   ItemRenderer: ItemRenderer<T>
   activeItem: T | null
+  expandAll?: boolean
 }
 
 type ItemRenderer<T> = (props: { id: string; content: T }) => JSX.Element | null
