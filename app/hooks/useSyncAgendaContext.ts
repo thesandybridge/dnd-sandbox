@@ -67,10 +67,13 @@ export function useSyncAgendaContent() {
   useEffect(() => {
     if (!blocks.length || !lastMoveTimestamp) return
 
-    queryClient.setQueryData(['agenda-order'], blocks.map((b, i) => ({
-      id: b.id,
-      parentId: b.parentId,
-      order: i
-    })))
+    const grouped = blocks.reduce((acc, block) => {
+      const key = block.parentId ?? 'root'
+      if (!acc[key]) acc[key] = []
+      acc[key].push({ id: block.id, order: block.order })
+      return acc
+    }, {} as Record<string, { id: string, order: number }[]>)
+
+    queryClient.setQueryData(['agenda-order'], grouped)
   }, [lastMoveTimestamp, blocks, queryClient])
 }

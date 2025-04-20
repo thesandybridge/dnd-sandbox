@@ -28,6 +28,15 @@ interface BlockContextValue<TBlock extends Block = Block> {
   lastMoveTimestamp: number
 }
 
+function sortBlocks<TBlock extends Block>(blocks: TBlock[]): TBlock[] {
+  return [...blocks].sort((a, b) => {
+    if (a.parentId === b.parentId) {
+      return a.order - b.order
+    }
+    return 0
+  })
+}
+
 export function createBlockContext<TBlock extends Block = Block>() {
   const BlockContext = createContext<BlockContextValue<TBlock> | null>(null)
 
@@ -44,7 +53,7 @@ export function createBlockContext<TBlock extends Block = Block>() {
     children: ReactNode
     initialBlocks?: TBlock[]
   }) => {
-    const [blocks, dispatch] = useReducer(blockReducer<TBlock>, initialBlocks)
+    const [blocks, dispatch] = useReducer(blockReducer<TBlock>, sortBlocks(initialBlocks))
     const [lastCreatedItem, setLastCreatedItem] = useState<TBlock | null>(null)
     const [lastDeletedIds, setLastDeletedIds] = useState<string[]>([])
     const [lastMoveTimestamp, setLastMoveTimestamp] = useState<number>(0)
@@ -110,7 +119,7 @@ export function createBlockContext<TBlock extends Block = Block>() {
     }, [blockMap, childrenMap, indexMap])
 
     const setAll = useCallback((all: TBlock[]) => {
-      dispatch({ type: 'SET_ALL', payload: all })
+      dispatch({ type: 'SET_ALL', payload: sortBlocks(all) })
     }, [])
 
     const value: BlockContextValue<TBlock> = useMemo(() => ({

@@ -21,6 +21,7 @@ export default function TestAgendaLayout({ children }: { children: React.ReactNo
         type: 'section',
         parentId: null,
         testId: sectionId,
+        order: i,
       })
 
       for (let j = 0; j < topics; j++) {
@@ -30,6 +31,7 @@ export default function TestAgendaLayout({ children }: { children: React.ReactNo
           type: 'topic',
           parentId: sectionId,
           testId: topicId,
+          order: j
         })
       }
     }

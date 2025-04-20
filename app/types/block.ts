@@ -4,6 +4,7 @@ export interface BaseBlock {
   id: string
   type: string
   parentId: string | null
+  order: number
   [key: string]: unknown
 }
 

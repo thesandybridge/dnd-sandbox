@@ -80,7 +80,8 @@ export function reparentBlock<T extends BaseBlock>(
   // Return new list with dragged block re-inserted at computed index
   const moved = {
     ...dragged,
-    parentId: newParentId
+    parentId: newParentId,
+    order: insertIndex,
   }
 
   return [
