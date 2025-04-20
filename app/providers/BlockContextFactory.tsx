@@ -25,6 +25,7 @@ interface BlockContextValue<TBlock extends Block = Block> {
   setAll: (blocks: TBlock[]) => void
   lastCreatedItem: TBlock | null
   lastDeletedIds: string[]
+  lastMoveTimestamp: number
 }
 
 export function createBlockContext<TBlock extends Block = Block>() {
@@ -46,6 +47,7 @@ export function createBlockContext<TBlock extends Block = Block>() {
     const [blocks, dispatch] = useReducer(blockReducer<TBlock>, initialBlocks)
     const [lastCreatedItem, setLastCreatedItem] = useState<TBlock | null>(null)
     const [lastDeletedIds, setLastDeletedIds] = useState<string[]>([])
+    const [lastMoveTimestamp, setLastMoveTimestamp] = useState<number>(0)
 
     const blockMap = useMemo(() => new Map(blocks.map(b => [b.id, b])), [blocks])
     const childrenMap = useMemo(() => {
@@ -104,6 +106,7 @@ export function createBlockContext<TBlock extends Block = Block>() {
           indexMap,
         },
       })
+      setLastMoveTimestamp(Date.now())
     }, [blockMap, childrenMap, indexMap])
 
     const setAll = useCallback((all: TBlock[]) => {
@@ -121,7 +124,8 @@ export function createBlockContext<TBlock extends Block = Block>() {
       setAll,
       lastCreatedItem,
       lastDeletedIds,
-    }), [blocks, blockMap, childrenMap, indexMap, createItem, deleteItem, moveItem, setAll, lastCreatedItem, lastDeletedIds])
+      lastMoveTimestamp,
+    }), [blocks, blockMap, childrenMap, indexMap, createItem, deleteItem, moveItem, setAll, lastCreatedItem, lastDeletedIds, lastMoveTimestamp])
 
     return (
       <BlockContext.Provider value={value}>

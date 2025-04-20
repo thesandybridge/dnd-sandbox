@@ -7,7 +7,12 @@ import { useBlocks } from '../providers/BlockProvider'
 
 export function useSyncAgendaContent() {
   const queryClient = useQueryClient()
-  const { lastCreatedItem, lastDeletedIds } = useBlocks()
+  const {
+    lastCreatedItem,
+    lastDeletedIds,
+    lastMoveTimestamp,
+    blocks,
+  } = useBlocks()
 
   useEffect(() => {
     if (!lastCreatedItem) return
@@ -58,4 +63,14 @@ export function useSyncAgendaContent() {
       return map
     })
   }, [lastDeletedIds, queryClient])
+
+  useEffect(() => {
+    if (!blocks.length || !lastMoveTimestamp) return
+
+    queryClient.setQueryData(['agenda-order'], blocks.map((b, i) => ({
+      id: b.id,
+      parentId: b.parentId,
+      order: i
+    })))
+  }, [lastMoveTimestamp, blocks, queryClient])
 }
