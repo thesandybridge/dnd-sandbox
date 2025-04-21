@@ -17,6 +17,7 @@ export function serializeBlocks(blocks: Block[]): SerializedAgenda {
     b.parentId,
     b.order,
     b.type,
+    b.itemId,
   ])
 
   const raw = JSON.stringify(minimal)
@@ -29,8 +30,14 @@ export function serializeBlocks(blocks: Block[]): SerializedAgenda {
 }
 
 export function deserializeBlocks(serialized: string): Block[] {
-  const arr: [string, string | null, number, 'section' | 'topic' | 'objective'][] = JSON.parse(serialized)
-  return arr.map(([id, parentId, order, type]) => ({ id, parentId, order, type }))
+  const arr: [string, string | null, number, 'section' | 'topic' | 'objective', string?][] = JSON.parse(serialized)
+  return arr.map(([id, parentId, order, type, itemId]) => ({
+    id,
+    parentId,
+    order,
+    type,
+    itemId: itemId ?? id
+  }))
 }
 
 function cryptoHash(input: string): string {

@@ -27,6 +27,8 @@ const ActionItem = ({ block, content }: Props) => {
   }, [block.id, deleteItem]);
 
 
+  if (!content) return null
+
   return (
     <div
       ref={setNodeRef}
