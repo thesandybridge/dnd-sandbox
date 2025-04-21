@@ -9,6 +9,8 @@ import { useBlocks } from "../providers/BlockProvider"
 import Topic from "./Topic"
 import Objective from "./Objective"
 import { useSyncAgendaContent } from "../hooks/useSyncAgendaContext"
+import { useBlockSerialization } from "../hooks/useBlockSerialization"
+import { MiniMap } from "./MiniMap"
 
 const AgendaControls = () => {
   const { createItem } = useBlocks()
@@ -46,6 +48,8 @@ const Agenda = ({
 }) => {
   const { blocks } = useBlocks()
   const { data } = useAgendaDetails(blocks)
+
+  const { diff } = useBlockSerialization(blocks)
   useSyncAgendaContent()
   if (!data) return null
 
@@ -59,6 +63,7 @@ const Agenda = ({
         <h1 className="text-2xl font-semibold mb-6">Agenda DnD Demo</h1>
         <AgendaControls />
         <TreeRenderer parentId={null} />
+        <MiniMap blocks={blocks} changes={diff} />
       </div>
     </TreeProvider>
   )
