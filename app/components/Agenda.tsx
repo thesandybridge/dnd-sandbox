@@ -48,9 +48,10 @@ const Agenda = ({
 }) => {
   const { blocks } = useBlocks()
   const { data } = useAgendaDetails(blocks)
-
   const { diff } = useBlockSerialization(blocks)
+
   useSyncAgendaContent()
+
   if (!data) return null
 
   return (
