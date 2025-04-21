@@ -18,29 +18,40 @@ export function useSyncAgendaContent() {
     if (!lastCreatedItem) return
 
     queryClient.setQueryData<Map<string, BlockContent>>(['agenda-details'], (old) => {
+      const itemId = lastCreatedItem.itemId
       const map = new Map(old ?? [])
       let content: BlockContent
 
       switch (lastCreatedItem.type) {
         case 'section':
           content = {
+            id: itemId,
             type: 'section',
-            title: `SECTION ${lastCreatedItem.id.slice(0, 4)}`,
-            summary: ''
+            title: `SECTION ${itemId.slice(0, 4)}`,
+            summary: '',
           }
           break
         case 'topic':
           content = {
+            id: itemId,
             type: 'topic',
-            title: `TOPIC ${lastCreatedItem.id.slice(0, 4)}`,
+            title: `TOPIC ${itemId.slice(0, 4)}`,
             description: ''
           }
           break
         case 'objective':
           content = {
+            id: itemId,
             type: 'objective',
-            title: `OBJECTIVE ${lastCreatedItem.id.slice(0, 4)}`,
+            title: `OBJECTIVE ${itemId.slice(0, 4)}`,
             progress: 0
+          }
+          break
+        case 'action-item':
+          content = {
+            id: itemId,
+            type: 'action-item',
+            title: `ACTION ITEM ${itemId.slice(0, 4)}`,
           }
           break
         default:

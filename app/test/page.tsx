@@ -1,5 +1,5 @@
 import Agenda from '../components/Agenda'
 
 export default function Page() {
-  return <Agenda expandAll />
+  return <Agenda expandAll virtualize />
 }

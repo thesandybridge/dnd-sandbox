@@ -79,6 +79,7 @@ export function createBlockContext<TBlock extends Block = Block>() {
       const newItem = {
         id: uuidv4(),
         type,
+        itemId: uuidv4(),
         parentId,
       } as TBlock
 

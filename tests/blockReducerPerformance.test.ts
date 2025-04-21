@@ -12,6 +12,7 @@ function createLargeBlock(sectionCount: number, topicsPerSection = 10): Block[] 
         id: `topic-${i}-${j}`,
         type: 'topic',
         parentId: sectionId,
+        itemId: `topic-${i}-${j}`,
       })
     }
   }

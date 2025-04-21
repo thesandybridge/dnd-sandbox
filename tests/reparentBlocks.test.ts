@@ -19,10 +19,10 @@ function createMaps(blocks: Block[]) {
 
 describe('reparentBlock', () => {
   const base: Block[] = [
-    { id: '1', type: 'section', parentId: null },
-    { id: '2', type: 'topic', parentId: '1' },
-    { id: '3', type: 'topic', parentId: null },
-    { id: '4', type: 'section', parentId: null }
+    { id: '1', type: 'section', parentId: null, itemId: '1' },
+    { id: '2', type: 'topic', parentId: '1', itemId: '2', },
+    { id: '3', type: 'topic', parentId: null, itemId: '3', },
+    { id: '4', type: 'section', parentId: null, itemId: '4', }
   ]
 
   it('moves a topic into a section', () => {

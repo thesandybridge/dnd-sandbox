@@ -11,6 +11,8 @@ import Objective from "./Objective"
 import { useSyncAgendaContent } from "../hooks/useSyncAgendaContext"
 import { useBlockSerialization } from "../hooks/useBlockSerialization"
 import { MiniMap } from "./MiniMap"
+import ActionItem from "./ActionItem"
+import VirtualTreeRenderer from "./TreeRenderer/VirtualTreeRenderer"
 
 const AgendaControls = () => {
   const { createItem } = useBlocks()
@@ -21,6 +23,7 @@ const AgendaControls = () => {
       <button onClick={() => createItem('section', null)} className="mb-4 px-3 py-1 bg-blue-500 text-white rounded">+ Section</button>
       <button onClick={() => createItem('topic', null)} className="mb-4 px-3 py-1 bg-blue-500 text-white rounded">+ Topic</button>
       <button onClick={() => createItem('objective', null)} className="mb-4 px-3 py-1 bg-blue-500 text-white rounded">+ Objective</button>
+      <button onClick={() => createItem('action-item', null)} className="mb-4 px-3 py-1 bg-blue-500 text-white rounded">+ Action Item</button>
       {isShiftHeld && <DisplayKey />}
     </div>
   )
@@ -36,16 +39,23 @@ const ItemRenderer = ({ id, content }: { id: string, content: BlockContent }) =>
       return <Topic block={block} content={content} />
     case "objective":
       return <Objective block={block} content={content} />
+    case "action-item":
+      return <ActionItem block={block} content={content} />
     default:
       return null
   }
 }
 
-const Agenda = ({
-  expandAll
-}: {
+interface AgendaProps {
   expandAll?: boolean,
-}) => {
+  diffView?: boolean,
+  virtualize?: boolean,
+}
+const Agenda = ({
+  expandAll = false,
+  diffView = false,
+  virtualize = false,
+}: AgendaProps) => {
   const { blocks } = useBlocks()
   const { data } = useAgendaDetails(blocks)
   const { diff } = useBlockSerialization(blocks)
@@ -62,9 +72,16 @@ const Agenda = ({
     >
       <div className="p-8 max-w-xl mx-auto">
         <h1 className="text-2xl font-semibold mb-6">Agenda DnD Demo</h1>
+        {virtualize && <p>Virtual Tree Renderer Enabled</p>}
         <AgendaControls />
-        <TreeRenderer parentId={null} />
-        <MiniMap blocks={blocks} changes={diff} />
+        {virtualize ? (
+          <VirtualTreeRenderer parentId={null} />
+        ) : (
+            <TreeRenderer parentId={null} />
+          )}
+        {diffView && (
+          <MiniMap blocks={blocks} changes={diff} />
+        )}
       </div>
     </TreeProvider>
   )

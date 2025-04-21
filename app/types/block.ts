@@ -2,9 +2,10 @@ import { UniqueIdentifier } from "@dnd-kit/core";
 
 export interface BaseBlock {
   id: string
-  type: string
+  type: 'section' | 'topic' | 'objective' | 'action-item'
   parentId: string | null
   order: number
+  itemId: string
   [key: string]: unknown
 }
 
@@ -25,6 +26,5 @@ export type BlockAction<T extends BaseBlock> =
 
 
 export interface Block extends BaseBlock {
-  type: 'section' | 'topic' | 'objective'
   testId?: string
 }

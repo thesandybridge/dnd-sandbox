@@ -5,7 +5,7 @@ import path from 'path'
 test('can drag topics to previous section', async ({ page }) => {
   test.setTimeout(60_000)
 
-  await page.goto('/test?sections=5&topics=10')
+  await page.goto('/test?sections=100&topics=10')
   await page.waitForLoadState('networkidle')
 
   await page.waitForSelector('[data-testid^="drag-handle-topic-"]', { timeout: 10000 })
