@@ -23,12 +23,24 @@ function sortBlocks(blocks: Block[], indexMap?: Map<string, number>) {
       if (a.order === b.order) {
         const ai = indexMap?.get(a.id) ?? 0
         const bi = indexMap?.get(b.id) ?? 0
-        return ai - bi
+        return ai - bi || a.id.localeCompare(b.id)
       }
       return a.order - b.order
     }
-    return String(a.parentId).localeCompare(String(b.parentId))
+    return String(a.parentId).localeCompare(String(b.parentId)) || a.id.localeCompare(b.id)
   })
+}
+
+function serializedOutput(minimal: SerializedBlock[]) {
+  const raw = JSON.stringify(minimal)
+  const hash = cryptoHash(raw)
+  const base64 = Buffer.from(raw).toString('base64')
+
+  return {
+    blocks: raw,
+    hash,
+    base64,
+  }
 }
 
 export function serializeBlocks(blocks: Block[]): SerializedAgenda {
@@ -42,15 +54,7 @@ export function serializeBlocks(blocks: Block[]): SerializedAgenda {
     b.itemId,
   ])
 
-  const raw = JSON.stringify(minimal)
-  const hash = cryptoHash(raw)
-  const base64 = Buffer.from(raw).toString('base64')
-
-  return {
-    blocks: raw,
-    hash,
-    base64,
-  }
+  return serializedOutput(minimal)
 }
 
 export function serializeBlockIndex(index: BlockIndex<Block>): SerializedAgenda {
@@ -69,15 +73,7 @@ export function serializeBlockIndex(index: BlockIndex<Block>): SerializedAgenda 
     b.itemId,
   ])
 
-  const raw = JSON.stringify(minimal)
-  const hash = cryptoHash(raw)
-  const base64 = Buffer.from(raw).toString('base64')
-
-  return {
-    blocks: raw,
-    hash,
-    base64,
-  }
+  return serializedOutput(minimal)
 }
 
 export function deserializeBlocks(serialized: string): Block[] {
