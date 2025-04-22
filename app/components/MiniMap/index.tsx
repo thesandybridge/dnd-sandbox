@@ -51,18 +51,23 @@ function MiniBlock({
   changeMap: Map<string, { type: 'added' | 'removed' | 'changed' }>
 }) {
   const change = changeMap.get(block.id)
+  let icon = ''
+  let color = 'bg-gray-100'
 
-  const color  = {
-    added: 'bg-green-100',
-    removed: 'bg-red-100',
-    changed: 'bg-yellow-100'
-  }[change?.type ?? ''] ?? 'bg-gray-100'
-
-  const icon = {
-    added: '+',
-    removed: '_',
-    changed: '⚡️'
-  }[change?.type ?? ''] ?? ''
+  switch (change?.type) {
+    case 'added':
+      icon = '+'
+      color = 'bg-green-100'
+      break
+    case 'removed':
+      icon = '-'
+      color = 'bg-red-100'
+      break
+    case 'changed':
+      icon = '⚡️'
+      color = 'bg-yellow-100'
+      break
+  }
 
   return (
     <div
