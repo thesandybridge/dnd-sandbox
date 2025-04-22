@@ -49,15 +49,13 @@ const AgendaControls = () => {
       </div>
       <div className="flex p-1 gap-2 items-center">
         {!isTesting && (
-          <>
-            <button
-              onClick={toggleVirtual}
-              className="px-3 py-1 bg-blue-500 text-white rounded">
-              Toggle Virtual
-            </button>
-            {isVirtual && <div className="p-1 border-solid border border-purple-100">Virtual Tree Renderer Enabled</div>}
-          </>
+          <button
+            onClick={toggleVirtual}
+            className="px-3 py-1 bg-blue-500 text-white rounded">
+            Toggle Virtual
+          </button>
         )}
+        {(isVirtual || isTesting) && <div className="p-1 border-solid border border-purple-100">Virtual Tree Renderer Enabled</div>}
         {isShiftHeld && <DisplayKey />}
       </div>
     </div>
@@ -81,16 +79,12 @@ const ItemRenderer = ({ id, content }: { id: string, content: BlockContent }) =>
   }
 }
 
-interface AgendaProps {
-  testing?: boolean,
-}
-const Agenda = ({
-  testing = false,
-}: AgendaProps) => {
+
+const Agenda = () => {
   const { blocks, normalizedIndex} = useBlocks()
   const { data } = useAgendaDetails(blocks)
   const { prev, next } = useBlockSerialization(blocks, normalizedIndex)
-  const { isTesting } = useTestMode(testing)
+  const { isTesting } = useTestMode()
 
   useSyncAgendaContent()
 
@@ -100,7 +94,7 @@ const Agenda = ({
     <TreeProvider
       data={data}
       ItemRenderer={ItemRenderer}
-      expandAll={testing}
+      expandAll={isTesting}
     >
       <div className="p-8 max-w-6xl mx-auto">
         <h1 className="text-2xl font-semibold mb-6">Agenda DnD Demo</h1>

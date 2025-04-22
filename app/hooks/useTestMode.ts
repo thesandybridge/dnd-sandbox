@@ -1,10 +1,10 @@
-import { useCallback, useState } from "react"
+'use client'
+import { usePathname } from 'next/navigation'
 
-export default function useTestMode(initial: boolean = false) {
-  const [isTesting, setIsTesting] = useState(initial)
+export default function useTestMode() {
+  const pathname = usePathname()
 
-  const enableTestMode = useCallback(() => setIsTesting(true), [])
-  const disableTestMode = useCallback(() => setIsTesting(false), [])
+  const isTesting = pathname.startsWith('/test') || pathname.includes('preview') // or whatever your route is
 
-  return { isTesting, enableTestMode, disableTestMode }
+  return { isTesting }
 }
