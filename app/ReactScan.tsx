@@ -3,12 +3,15 @@
 import { scan } from "react-scan";
 import { JSX, useEffect } from "react";
 
-export function ReactScan(): JSX.Element {
+interface Props {
+  enabled?: boolean
+}
+export function ReactScan({ enabled = false }: Props): JSX.Element {
   useEffect(() => {
     scan({
-      enabled: true,
+      enabled,
     });
-  }, []);
+  }, [enabled]);
 
   return <></>;
 }

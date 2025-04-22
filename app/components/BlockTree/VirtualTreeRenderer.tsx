@@ -76,8 +76,9 @@ const VirtualTreeRenderer = ({ parentId = null }: Props) => {
       onDragEnd={handleDragEnd}
       sensors={sensors}
     >
-      <div ref={parentRef} className={indent}>
+      <div ref={parentRef}>
         <div
+          className={indent}
           style={{
             paddingTop: rowVirtualizer.getVirtualItems()[0]?.start ?? 0,
             paddingBottom:
