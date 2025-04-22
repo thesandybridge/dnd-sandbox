@@ -10,9 +10,9 @@ import {
   ReactNode,
 } from 'react'
 import expandReducer, { ExpandAction } from '@/app/reducers/expandReducer'
-import { useModifierKey } from '@/app/hooks/useModifierKey'
 import { useBlocks } from './BlockProvider'
 import { Block } from '../types/block'
+import { useDraggingModifierKey } from '../hooks/useDraggingModifierKey'
 
 export function createTreeContext<TContent = unknown, TBlock extends Block = Block>() {
   const TreeContext = createContext<TreeContextType<TContent, TBlock> | null>(null)
@@ -36,7 +36,13 @@ export function createTreeContext<TContent = unknown, TBlock extends Block = Blo
         expandAll?: boolean
       }) => {
       const { blocks } = useBlocks()
-      const [activeId, setActiveId] = useState<string | null>(null)
+      const [activeIdRaw, setActiveIdRaw] = useState<string | null>(null)
+      const [isDragging, setIsDragging] = useState(false)
+
+      const setActiveId = useCallback((id: string | null) => {
+        setIsDragging(!!id)
+        setActiveIdRaw(id)
+      }, [])
       const [hoverZone, setHoverZone] = useState<string | null>(null)
       const [isVirtual, setIsVirtual] = useState(false);
       const [hoveredId, setHoveredId] = useState<string | null>(null)
@@ -57,20 +63,21 @@ export function createTreeContext<TContent = unknown, TBlock extends Block = Blo
 
       const [expandedMap, dispatchExpand] = useReducer(expandReducer,initialExpanded)
 
-      const { pressed: isShiftHeld, DisplayKey } = useModifierKey('Shift')
+      const { pressed: isShiftHeld, DisplayKey } = useDraggingModifierKey('Shift', isDragging)
 
       const effectiveExpandedMap = useMemo(() => {
-        if (!isShiftHeld) return expandedMap
+        if (!(isDragging && isShiftHeld)) return expandedMap
+
         const collapsed: Record<string, boolean> = {}
         blocks.forEach(b => {
           if (b.type === 'section') collapsed[b.id] = false
         })
         return collapsed
-      }, [isShiftHeld, expandedMap, blocks])
+      }, [isDragging, isShiftHeld, expandedMap, blocks])
 
       const activeBlock = useMemo(
-        () => blocks.find(b => b.id === activeId) || null,
-        [activeId, blocks]
+        () => blocks.find(b => b.id === activeIdRaw) || null,
+        [activeIdRaw, blocks]
       )
 
       const blocksByParent = useMemo(() => {
@@ -83,18 +90,18 @@ export function createTreeContext<TContent = unknown, TBlock extends Block = Blo
       }, [blocks])
 
       const activeItem = useMemo(() => {
-        if (!activeId) return null
-        return data.get(activeId) ?? null
-      }, [activeId, data])
+        if (!activeIdRaw) return null
+        return data.get(activeIdRaw) ?? null
+      }, [activeIdRaw, data])
 
       const handleHover = useCallback(
         (zoneId: string, parentId: string | null) => {
-          const dragged = blocks.find(b => b.id === activeId)
+          const dragged = blocks.find(b => b.id === activeIdRaw)
           if (!dragged) return
           if (dragged.type === 'section' && parentId) return
           setHoverZone(zoneId)
         },
-        [activeId, blocks]
+        [activeIdRaw, blocks]
       )
 
       const value: TreeContextType<TContent, TBlock> = useMemo(() => ({
@@ -105,7 +112,7 @@ export function createTreeContext<TContent = unknown, TBlock extends Block = Blo
         dispatchExpand,
         hoverZone,
         setHoverZone,
-        activeId,
+        activeIdRaw,
         setActiveId,
         activeBlock: activeBlock as TBlock | null,
         isShiftHeld,
@@ -118,7 +125,7 @@ export function createTreeContext<TContent = unknown, TBlock extends Block = Blo
         toggleVirtual,
         hoveredId,
         setHoveredId
-      }), [DisplayKey, ItemRenderer, activeBlock, activeId, activeItem, blocks, blocksByParent, data, effectiveExpandedMap, expandAll, handleHover, hoverZone, isShiftHeld, isVirtual, toggleVirtual, hoveredId, setHoveredId])
+      }), [blocks, blocksByParent, data, effectiveExpandedMap, hoverZone, activeIdRaw, setActiveId, activeBlock, isShiftHeld, DisplayKey, handleHover, ItemRenderer, activeItem, expandAll, isVirtual, toggleVirtual, hoveredId])
 
       return <TreeContext.Provider value={value}>{children}</TreeContext.Provider>
     }
@@ -137,7 +144,7 @@ interface TreeContextType<T, TBlock extends Block> {
   dispatchExpand: React.Dispatch<ExpandAction>
   hoverZone: string | null
   setHoverZone: (z: string | null) => void
-  activeId: string | null
+  activeIdRaw: string | null
   setActiveId: (id: string | null) => void
   activeBlock: TBlock | null
   isShiftHeld: boolean

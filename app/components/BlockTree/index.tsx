@@ -24,7 +24,7 @@ const BlockTree = () => {
     isVirtual,
     activeBlock,
     setActiveId,
-    activeId,
+    activeIdRaw,
     hoverZone,
     data,
     setHoverZone,
@@ -51,11 +51,11 @@ const BlockTree = () => {
   }, [setActiveId])
 
   const handleDragEnd = useCallback(() => {
-    if (!activeId || !hoverZone) return
-    moveItem(activeId, hoverZone)
+    if (!activeIdRaw || !hoverZone) return
+    moveItem(activeIdRaw, hoverZone)
     setActiveId(null)
     setHoverZone(null)
-  }, [activeId, hoverZone, moveItem, setActiveId, setHoverZone])
+  }, [activeIdRaw, hoverZone, moveItem, setActiveId, setHoverZone])
 
 
   return (
