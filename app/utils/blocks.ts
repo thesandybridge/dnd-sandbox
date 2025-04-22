@@ -35,76 +35,62 @@ export function reparentBlock<T extends BaseBlock>(
   const isAfter = hoverZone.startsWith('after-')
   const isInto = hoverZone.startsWith('into-')
 
-  // Determine new parent ID based on zone type
   const newParentId = isInto
     ? zoneTargetId
     : target?.parentId ?? null
 
-  // Prevent sections from being nested
   if (dragged.type === 'section' && newParentId !== null) return blocks
-
-  // Prevent dropping onto itself
   if (dragged.id === zoneTargetId) return blocks
 
-  // Remove the dragged block from the list
-  const remaining = blocks.filter(b => b.id !== activeId)
-
-  // Rebuild index map for remaining list to ensure index correctness
-  const remainingIndexMap = new Map<string, number>()
-  for (let i = 0; i < remaining.length; i++) {
-    remainingIndexMap.set(remaining[i].id, i)
-  }
+  const oldParentId = dragged.parentId ?? null
+  const remaining = blocks.filter(b => b.id !== dragged.id)
 
   let insertIndex = remaining.length
 
   if (isInto) {
-    // Get children of the drop target (section)
     const siblings = childrenMap.get(zoneTargetId) ?? []
-
-    if (siblings.length > 0) {
-      // Insert after the last visible child of the target section
-      const last = siblings[siblings.length - 1]
+    const last = siblings.at(-1)
+    if (last) {
       const idx = remaining.findIndex(b => b.id === last.id)
       insertIndex = idx === -1 ? remaining.length : idx + 1
     } else {
-      // Section is empty — insert right after it
       const idx = remaining.findIndex(b => b.id === zoneTargetId)
       insertIndex = idx === -1 ? remaining.length : idx + 1
     }
   } else {
-    // Insert before or after the hovered sibling
     const idx = remaining.findIndex(b => b.id === zoneTargetId)
     insertIndex = idx === -1 ? remaining.length : (isAfter ? idx + 1 : idx)
   }
 
-  // Return new list with dragged block re-inserted at computed index
   const moved = {
     ...dragged,
-    parentId: newParentId,
-    order: insertIndex,
+    parentId: newParentId
   }
 
-  const newList = [
+  const result = [
     ...remaining.slice(0, insertIndex),
     moved,
     ...remaining.slice(insertIndex)
   ]
 
-  // Reassign order per parent group
-  const reordered: T[] = []
-  const siblingsByParent = new Map<string | null, T[]>()
+  // only rebuild order for affected parent groups
+  const parentsToUpdate = new Set<string | null>()
+  parentsToUpdate.add(oldParentId)
+  parentsToUpdate.add(newParentId)
 
-  for (const block of newList) {
-    const key = block.parentId ?? null
-    const siblings = siblingsByParent.get(key) ?? []
-    siblingsByParent.set(key, [...siblings, block])
+  const updated: T[] = []
+
+  for (const block of result) {
+    if (!parentsToUpdate.has(block.parentId ?? null)) {
+      updated.push(block)
+      continue
+    }
+
+    const siblings = result.filter(b => (b.parentId ?? null) === (block.parentId ?? null))
+    const index = siblings.findIndex(b => b.id === block.id)
+    const newBlock = block.order !== index ? { ...block, order: index } : block
+    updated.push(newBlock)
   }
 
-  for (const block of newList) {
-    const siblings = siblingsByParent.get(block.parentId ?? null) || []
-    const order = siblings.findIndex(sib => sib.id === block.id)
-    reordered.push({ ...block, order })
-  }
-
-  return reordered
+  return updated
 }
