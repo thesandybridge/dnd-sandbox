@@ -1,3 +1,4 @@
+import { useTreeContext } from "@/app/providers/TreeProvider"
 import { Block } from "@/app/types/block"
 import { serializeDiff } from "@/app/utils/serializer"
 import { TreeNode, buildTree } from "@/app/utils/serializer"
@@ -52,6 +53,7 @@ function MiniBlock({
   block: TreeNode
   changeMap: Map<string, { type: 'added' | 'removed' | 'changed' }>
 }) {
+  const { setHoveredId } = useTreeContext()
   const change = changeMap.get(block.id)
   let icon = ''
   let color = 'bg-gray-100'
@@ -75,6 +77,8 @@ function MiniBlock({
     <div
       style={{ paddingLeft: block.depth * 12 }}
       className={`py-0.5 ${color} hover:bg-gray-200 flex flex-col`}
+      onMouseEnter={() => setHoveredId(block.id)}
+      onMouseLeave={() => setHoveredId(null)}
     >
       <div className="flex gap-1 items-center">
         <span className="text-sm w-4 text-center">{icon}</span>
