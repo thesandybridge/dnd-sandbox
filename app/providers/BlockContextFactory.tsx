@@ -21,6 +21,7 @@ interface BlockContextValue<TBlock extends Block = Block> {
   childrenMap: Map<string | null, TBlock[]>
   indexMap: Map<string, number>
   createItem: (type: TBlock['type'], parentId?: string | null, testId?: string) => TBlock
+  insertItem: (type: TBlock['type'], referenceId: string, position: 'before' | 'after') => TBlock // ← Add this
   deleteItem: (id: string) => void
   moveItem: (activeId: UniqueIdentifier, hoverZone: string) => void
   setAll: (blocks: TBlock[]) => void
@@ -116,6 +117,39 @@ export function createBlockContext<TBlock extends Block = Block>() {
       return newItem
     }, [])
 
+    const insertItem = useCallback((
+      type: TBlock['type'],
+      referenceId: string,
+      position: 'before' | 'after'
+    ): TBlock => {
+        const referenceBlock = state.byId.get(referenceId)
+        if (!referenceBlock) throw new Error(`Reference block ${referenceId} not found`)
+
+        const parentId = referenceBlock.parentId ?? null
+        const siblings = state.byParent.get(parentId) ?? []
+        const index = siblings.indexOf(referenceId)
+        const insertIndex = position === 'before' ? index : index + 1
+
+        const newItem = {
+          id: uuidv4(),
+          type,
+          itemId: uuidv4(),
+          parentId,
+        } as TBlock
+
+        dispatch({
+          type: 'INSERT_ITEM',
+          payload: {
+            item: newItem,
+            parentId,
+            index: insertIndex,
+          }
+        })
+
+        setLastCreatedItem(newItem)
+        return newItem
+      }, [state])
+
     const deleteItem = useCallback((id: string) => {
       setLastDeletedIds([id])
       dispatch({ type: 'DELETE_ITEM', payload: { id } })
@@ -143,6 +177,7 @@ export function createBlockContext<TBlock extends Block = Block>() {
       childrenMap,
       indexMap,
       createItem,
+      insertItem,
       deleteItem,
       moveItem,
       setAll,
@@ -151,7 +186,7 @@ export function createBlockContext<TBlock extends Block = Block>() {
       lastDeletedIds,
       lastMoveTimestamp,
       normalizedIndex: state,
-    }), [blocks, blockMap, childrenMap, indexMap, createItem, deleteItem, moveItem, setAll, applyDiff, lastCreatedItem, lastDeletedIds, lastMoveTimestamp, state])
+    }), [blocks, blockMap, childrenMap, indexMap, createItem, insertItem, deleteItem, moveItem, setAll, applyDiff, lastCreatedItem, lastDeletedIds, lastMoveTimestamp, state])
 
     return (
       <BlockContext.Provider value={value}>

@@ -30,6 +30,19 @@ export function blockReducer<T extends BaseBlock>(
       return { byId, byParent }
     }
 
+    case 'INSERT_ITEM': {
+      const { item, parentId, index } = action.payload
+      const updated = new Map(state.byParent)
+      const siblings = [...(updated.get(parentId) ?? [])]
+      siblings.splice(index, 0, item.id)
+      updated.set(parentId, siblings)
+
+      return {
+        byId: new Map(state.byId).set(item.id, item),
+        byParent: updated,
+      }
+    }
+
     case 'DELETE_ITEM': {
       const byId = cloneMap(state.byId)
       const byParent = cloneParentMap(state.byParent)

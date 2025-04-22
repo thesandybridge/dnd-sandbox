@@ -16,6 +16,7 @@ export type BlockAction<T extends BaseBlock> =
   | { type: 'SET_ALL'; payload: T[] }
   | { type: 'MOVE_ITEM'; payload: { activeId: UniqueIdentifier; hoverZone: string } }
   | { type: 'APPLY_DIFF'; payload: SerializedDiff }
+  | { type: 'INSERT_ITEM'; payload: { item: T; parentId: string | null; index: number } }
 
 export interface Block extends BaseBlock {
   testId?: string

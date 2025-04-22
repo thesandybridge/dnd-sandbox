@@ -16,6 +16,7 @@ interface Props {
 }
 
 const SectionContainer = ({ block }: Props) => {
+
   const { createItem, deleteItem } = useBlocks()
   const {
     blocksByParent,
@@ -78,8 +79,8 @@ const SectionContainer = ({ block }: Props) => {
           <DragHandle
             listeners={listeners}
             attributes={attributes}
-            onMenuOpen={() => console.log(block.itemId)}
             testId={block.testId}
+            blockId={block.id}
           />
           <button
             onClick={() => dispatchExpand({ type: 'TOGGLE', id: block.id })}

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import QueryClientProvider from "@/app/providers/QueryClientProvider"
+import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import "./globals.css";
 
 const geistSans = localFont({
@@ -28,13 +29,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <QueryClientProvider>
-          {children}
-          <ReactQueryDevtools
-            initialIsOpen={false}
-            buttonPosition="bottom-left"
-          />
-        </QueryClientProvider>
+        <AppRouterCacheProvider>
+          <QueryClientProvider>
+            {children}
+            <ReactQueryDevtools
+              initialIsOpen={false}
+              buttonPosition="bottom-left"
+            />
+          </QueryClientProvider>
+        </AppRouterCacheProvider>
       </body>
     </html>
   );

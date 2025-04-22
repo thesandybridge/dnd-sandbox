@@ -39,7 +39,7 @@ const ActionItem = ({ block, content }: Props) => {
       <DragHandle
         listeners={listeners}
         attributes={attributes}
-        onMenuOpen={() => console.log(block.itemId)}
+        blockId={block.id}
         testId={block.testId}
       />
       <div className='grow'>

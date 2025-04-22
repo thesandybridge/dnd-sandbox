@@ -86,8 +86,8 @@ const Topic = ({ block, content }: Props) => {
       <DragHandle
         listeners={listeners}
         attributes={attributes}
-        onMenuOpen={() => console.log(block.itemId)}
         testId={block.testId}
+        blockId={block.id}
       />
       <div className='grow'>
         <EditorContent editor={editor} />
