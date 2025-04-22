@@ -87,9 +87,9 @@ interface AgendaProps {
 const Agenda = ({
   testing = false,
 }: AgendaProps) => {
-  const { blocks } = useBlocks()
+  const { blocks, normalizedIndex} = useBlocks()
   const { data } = useAgendaDetails(blocks)
-  const { prev, next } = useBlockSerialization(blocks)
+  const { prev, next } = useBlockSerialization(blocks, normalizedIndex)
   const { isTesting } = useTestMode(testing)
 
   useSyncAgendaContent()

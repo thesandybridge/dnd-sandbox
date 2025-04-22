@@ -26,6 +26,7 @@ interface BlockContextValue<TBlock extends Block = Block> {
   lastCreatedItem: TBlock | null
   lastDeletedIds: string[]
   lastMoveTimestamp: number
+  normalizedIndex: BlockIndex<TBlock>
 }
 
 export function createBlockContext<TBlock extends Block = Block>() {
@@ -44,7 +45,7 @@ export function createBlockContext<TBlock extends Block = Block>() {
       children: ReactNode
       initialBlocks?: TBlock[]
     }) => {
-    const normalizeBlocks = (flat: TBlock[]): BlockIndex<TBlock> => {
+    const computeNormalizedIndex = useCallback((flat: TBlock[]): BlockIndex<TBlock> => {
       const byId = new Map<string, TBlock>()
       const byParent = new Map<string | null, string[]>()
 
@@ -56,9 +57,9 @@ export function createBlockContext<TBlock extends Block = Block>() {
       }
 
       return { byId, byParent }
-    }
+    }, [])
 
-    const [state, dispatch] = useReducer(blockReducer<TBlock>, normalizeBlocks(initialBlocks))
+    const [state, dispatch] = useReducer(blockReducer<TBlock>, computeNormalizedIndex(initialBlocks))
     const [lastCreatedItem, setLastCreatedItem] = useState<TBlock | null>(null)
     const [lastDeletedIds, setLastDeletedIds] = useState<string[]>([])
     const [lastMoveTimestamp, setLastMoveTimestamp] = useState<number>(0)
@@ -142,7 +143,8 @@ export function createBlockContext<TBlock extends Block = Block>() {
       lastCreatedItem,
       lastDeletedIds,
       lastMoveTimestamp,
-    }), [blocks, blockMap, childrenMap, indexMap, createItem, deleteItem, moveItem, setAll, lastCreatedItem, lastDeletedIds, lastMoveTimestamp])
+      normalizedIndex: state,
+    }), [blocks, blockMap, childrenMap, indexMap, createItem, deleteItem, moveItem, setAll, lastCreatedItem, lastDeletedIds, lastMoveTimestamp, state])
 
     return (
       <BlockContext.Provider value={value}>

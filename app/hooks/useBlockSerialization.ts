@@ -1,28 +1,36 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { serializeBlocks, diffBlocks, deserializeBlocks } from '../utils/serializer'
-import { Block } from '../types/block'
+import { serializeBlockIndex, serializeDiff, deserializeBlocks } from '../utils/serializer'
+import { Block, BlockIndex } from '../types/block'
 
-export function useBlockSerialization(blocks: Block[]) {
-  const serialized = useMemo(() => serializeBlocks(blocks), [blocks])
+export function useBlockSerialization(blocks: Block[], index: BlockIndex<Block>) {
+  const serialized = useMemo(() => serializeBlockIndex(index), [index])
+
   const prev = useRef<Block[]>(blocks)
   const [lastDiff, setLastDiff] = useState<Block[]>([])
   const [lastPrev, setLastPrev] = useState<Block[]>([])
 
-  const currentDiff = useMemo(() => diffBlocks(prev.current, blocks), [blocks])
+  const currentDiff = useMemo(() => {
+    return serializeDiff(prev.current, blocks)
+  }, [blocks])
 
   useEffect(() => {
-    if (currentDiff.length > 0) {
+    if (
+      currentDiff.added.length > 0 ||
+      currentDiff.removed.length > 0 ||
+      currentDiff.changed.length > 0
+    ) {
       setLastPrev(prev.current)
       setLastDiff(blocks)
     }
 
     prev.current = blocks
-  }, [blocks, currentDiff.length])
+  }, [blocks, currentDiff.added.length, currentDiff.changed.length, currentDiff.hash, currentDiff.removed.length])
 
   return {
     serialized,
     prev: lastPrev,
     next: lastDiff,
-    deserialize: deserializeBlocks
+    deserialize: deserializeBlocks,
+    diff: currentDiff,
   }
 }
