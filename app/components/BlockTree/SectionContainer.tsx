@@ -118,6 +118,9 @@ const SectionContainer = ({ block }: Props) => {
             <div className="flex items-center justify-center p-2 cursor-pointer" onClick={() => createItem('objective', block.id)}>
               + Add Objective
             </div>
+            <div className="flex items-center justify-center p-2 cursor-pointer" onClick={() => createItem('action-item', block.id)}>
+              + Add Action Item
+            </div>
           </div>
         </>
       )}
