@@ -1,10 +1,13 @@
 import { createHash } from 'crypto'
-import { Block } from '../types/block'
+import { Block, BlockIndex } from '../types/block'
 
 export type SerializedAgenda = {
-  blocks: string // base64 or JSON-encoded block array
-  hash: string   // SHA-256 hash of canonical content
+  blocks: string
+  hash: string
+  base64: string
 }
+
+type SerializedBlock = [string, string | null, number, string, string?]
 
 export function serializeBlocks(blocks: Block[]): SerializedAgenda {
   const sorted = [...blocks].sort((a, b) => {
@@ -12,7 +15,7 @@ export function serializeBlocks(blocks: Block[]): SerializedAgenda {
     return String(a.parentId).localeCompare(String(b.parentId))
   })
 
-  const minimal = sorted.map(b => [
+  const minimal: SerializedBlock[] = sorted.map(b => [
     b.id,
     b.parentId,
     b.order,
@@ -22,25 +25,52 @@ export function serializeBlocks(blocks: Block[]): SerializedAgenda {
 
   const raw = JSON.stringify(minimal)
   const hash = cryptoHash(raw)
+  const base64 = Buffer.from(raw).toString('base64')
 
   return {
     blocks: raw,
-    hash
+    hash,
+    base64,
+  }
+}
+
+export function serializeBlockIndex(index: BlockIndex<Block>): SerializedAgenda {
+  const sorted = Array.from(index.byId.values()).sort((a, b) => {
+    if (a.parentId === b.parentId) return a.order - b.order
+    return String(a.parentId).localeCompare(String(b.parentId))
+  })
+
+  const minimal: SerializedBlock[] = sorted.map(b => [
+    b.id,
+    b.parentId,
+    b.order,
+    b.type,
+    b.itemId,
+  ])
+
+  const raw = JSON.stringify(minimal)
+  const hash = cryptoHash(raw)
+  const base64 = Buffer.from(raw).toString('base64')
+
+  return {
+    blocks: raw,
+    hash,
+    base64,
   }
 }
 
 export function deserializeBlocks(serialized: string): Block[] {
-  const arr: [string, string | null, number, 'section' | 'topic' | 'objective', string?][] = JSON.parse(serialized)
+  const arr: SerializedBlock[] = JSON.parse(serialized)
   return arr.map(([id, parentId, order, type, itemId]) => ({
     id,
     parentId,
     order,
-    type,
+    type: type as Block['type'],
     itemId: itemId ?? id
   }))
 }
 
-function cryptoHash(input: string): string {
+export function cryptoHash(input: string): string {
   return createHash('sha256').update(input).digest('hex')
 }
 
@@ -80,6 +110,46 @@ export function diffBlocks(
   }
 
   return changes
+}
+
+export type SerializedDiff = {
+  added: SerializedBlock[]
+  removed: SerializedBlock[]
+  changed: SerializedBlock[]
+  hash: string
+}
+
+function serializeBlock(b: Block): SerializedBlock {
+  return [b.id, b.parentId, b.order, b.type, b.itemId]
+}
+
+export function serializeDiff(prev: Block[], next: Block[]): SerializedDiff {
+  const changes = diffBlocks(prev, next)
+
+  const added: SerializedBlock[] = []
+  const removed: SerializedBlock[] = []
+  const changed: SerializedBlock[] = []
+
+  for (const change of changes) {
+    const serialized = serializeBlock(change.block)
+    if (change.type === 'added') {
+      added.push(serialized)
+    } else if (change.type === 'removed') {
+      removed.push(serialized)
+    } else if (change.type === 'changed') {
+      changed.push(serialized)
+    }
+  }
+
+  const raw = JSON.stringify({ added, removed, changed })
+  const hash = cryptoHash(raw)
+
+  return {
+    added,
+    removed,
+    changed,
+    hash
+  }
 }
 
 export type TreeNode = Block & { children: TreeNode[], depth: number }

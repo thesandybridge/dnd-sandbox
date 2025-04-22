@@ -1,18 +1,38 @@
 import { Block } from "@/app/types/block"
-import { BlockChange } from "@/app/utils/serializer"
+import { serializeDiff } from "@/app/utils/serializer"
 import { TreeNode, buildTree } from "@/app/utils/serializer"
 
-export function MiniMap({ blocks, changes }: { blocks: Block[], changes: BlockChange[] }) {
-  const changeMap = new Map<string, BlockChange>()
-  for (const change of changes) {
-    changeMap.set(change.block.id, change)
+export function MiniMap({ prev, next }: { prev: Block[], next: Block[] }) {
+  const { added, removed, changed } = serializeDiff(prev, next)
+
+  const changeMap = new Map<string, { type: 'added' | 'removed' | 'changed' }>()
+
+  for (const [id] of added) {
+    changeMap.set(id, { type: 'added' })
   }
 
-  const removedBlocks = changes
-  .filter(c => c.type === 'removed')
-  .map(c => c.block)
+  for (const [id] of removed) {
+    changeMap.set(id, { type: 'removed' })
+  }
 
-  const tree = buildTree(blocks, removedBlocks)
+  for (const [id] of changed) {
+    // only set 'changed' if not already marked as 'added' or 'removed'
+    if (!changeMap.has(id)) {
+      changeMap.set(id, { type: 'changed' })
+    }
+  }
+
+  const allBlocks = next.concat(
+    removed.map(([id, parentId, order, type, itemId]) => ({
+      id,
+      parentId,
+      order,
+      type: type as Block['type'],
+      itemId: itemId ?? id
+    }))
+  )
+
+  const tree = buildTree(allBlocks)
 
   return (
     <div className="p-2 rounded text-sm font-mono text-gray-800 bg-gray-100 border">
@@ -28,26 +48,21 @@ function MiniBlock({
   changeMap
 }: {
   block: TreeNode
-  changeMap: Map<string, BlockChange>
+  changeMap: Map<string, { type: 'added' | 'removed' | 'changed' }>
 }) {
   const change = changeMap.get(block.id)
-  let icon = ''
-  let color = 'bg-gray-100'
 
-  switch (change?.type) {
-    case 'added':
-      icon = '+'
-      color = 'bg-green-100'
-      break
-    case 'removed':
-      icon = '-'
-      color = 'bg-red-100'
-      break
-    case 'changed':
-      icon = '⚡️'
-      color = 'bg-yellow-100'
-      break
-  }
+  const color  = {
+    added: 'bg-green-100',
+    removed: 'bg-red-100',
+    changed: 'bg-yellow-100'
+  }[change?.type ?? ''] ?? 'bg-gray-100'
+
+  const icon = {
+    added: '+',
+    removed: '_',
+    changed: '⚡️'
+  }[change?.type ?? ''] ?? ''
 
   return (
     <div

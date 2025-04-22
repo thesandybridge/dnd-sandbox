@@ -89,7 +89,7 @@ const Agenda = ({
 }: AgendaProps) => {
   const { blocks } = useBlocks()
   const { data } = useAgendaDetails(blocks)
-  const { diff } = useBlockSerialization(blocks)
+  const { prev, next } = useBlockSerialization(blocks)
   const { isTesting } = useTestMode(testing)
 
   useSyncAgendaContent()
@@ -112,7 +112,7 @@ const Agenda = ({
           {!isTesting && (
             <div className="w-1/3">
               <div className="sticky top-2 py-2">
-                <MiniMap blocks={blocks} changes={diff} />
+                <MiniMap prev={prev} next={next} />
               </div>
             </div>
           )}
