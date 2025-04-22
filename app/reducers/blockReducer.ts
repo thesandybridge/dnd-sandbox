@@ -1,5 +1,6 @@
 import { BaseBlock, BlockAction, BlockIndex } from "../types/block"
 import { cloneMap, cloneParentMap, reparentBlockIndex } from "../utils/blocks"
+import { applyBlockDiff } from "../utils/diff"
 
 export function blockReducer<T extends BaseBlock>(
   state: BlockIndex<T>,
@@ -12,8 +13,19 @@ export function blockReducer<T extends BaseBlock>(
       const item = action.payload
 
       byId.set(item.id, item)
-      const list = byParent.get(item.parentId ?? null) ?? []
-      byParent.set(item.parentId ?? null, [...list, item.id])
+
+      const parentKey = item.parentId ?? null
+      const list = byParent.get(parentKey) ?? []
+
+      // Insert using provided order if present
+      const insertAt = typeof item.order === 'number' && item.order <= list.length
+        ? item.order
+        : list.length
+
+      const newList = [...list]
+      newList.splice(insertAt, 0, item.id)
+
+      byParent.set(parentKey, newList)
 
       return { byId, byParent }
     }
@@ -63,6 +75,10 @@ export function blockReducer<T extends BaseBlock>(
 
     case 'MOVE_ITEM': {
       return reparentBlockIndex(state, action.payload.activeId, action.payload.hoverZone)
+    }
+
+    case 'APPLY_DIFF': {
+      return applyBlockDiff(state, action.payload)
     }
 
     default:

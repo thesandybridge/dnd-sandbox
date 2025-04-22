@@ -13,6 +13,7 @@ import { MiniMap } from "./MiniMap"
 import ActionItem from "./ActionItem"
 import BlockTree from "./BlockTree"
 import useTestMode from "../hooks/useTestMode"
+import SandboxControls from "./SandboxControls"
 
 const AgendaControls = () => {
   const { createItem } = useBlocks()
@@ -99,6 +100,7 @@ const Agenda = () => {
       <div className="p-8 max-w-6xl mx-auto">
         <h1 className="text-2xl font-semibold mb-6">Agenda DnD Demo</h1>
         <AgendaControls />
+        <SandboxControls />
         <div className="flex flex-col-reverse md:flex-row gap-2">
           <div className={isTesting ? "w-full" : "md:w-2/3"}>
             <BlockTree />

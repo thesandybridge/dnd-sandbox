@@ -76,6 +76,17 @@ export function serializeBlockIndex(index: BlockIndex<Block>): SerializedAgenda 
   return serializedOutput(minimal)
 }
 
+export function deserializeBlock([id, parentId, order, type, itemId]: SerializedBlock) {
+
+  return {
+    id,
+    parentId,
+    order,
+    type,
+    itemId: itemId ?? id,
+  }
+}
+
 export function deserializeBlocks(serialized: string): Block[] {
   const arr: SerializedBlock[] = JSON.parse(serialized)
   return arr.map(([id, parentId, order, type, itemId]) => ({
@@ -136,7 +147,7 @@ export type SerializedDiff = {
   hash: string
 }
 
-function serializeBlock(b: Block): SerializedBlock {
+export function serializeBlock(b: Block): SerializedBlock {
   return [b.id, b.parentId, b.order, b.type, b.itemId]
 }
 

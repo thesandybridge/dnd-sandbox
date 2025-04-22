@@ -3,6 +3,7 @@
 import { memo } from "react"
 import { useTreeContext } from "@/app/providers/TreeProvider"
 import { useBlocks } from "@/app/providers/BlockProvider"
+import { useBlockContent } from "@/app/hooks/useBlockContent"
 
 interface Props {
   id: string
@@ -10,10 +11,10 @@ interface Props {
 
 const ItemWrapper = ({ id }: Props) => {
   const { blockMap } = useBlocks()
-  const { data, ItemRenderer, hoveredId } = useTreeContext()
+  const { ItemRenderer, hoveredId, blocks } = useTreeContext()
 
   const block = blockMap.get(id)
-  const content = data?.get(id)
+  const content = useBlockContent(block, blocks)
 
   if (!block || !content) return null
 

@@ -49,6 +49,16 @@ export function reparentBlockIndex<T extends BaseBlock>(
     insertIndex = idx === -1 ? newList.length : isAfter ? idx + 1 : idx
   }
 
+  const currentIndex = newList.indexOf(dragged.id)
+
+  if (
+    dragged.parentId === newParentId &&
+      currentIndex === insertIndex
+  ) {
+    return state
+  }
+
+
   newList.splice(insertIndex, 0, dragged.id)
   byParent.set(newParentId, newList)
 

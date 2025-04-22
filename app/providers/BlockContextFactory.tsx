@@ -13,6 +13,7 @@ import { v4 as uuidv4 } from 'uuid'
 import type { UniqueIdentifier } from '@dnd-kit/core'
 import { blockReducer } from '../reducers/blockReducer'
 import { Block, BlockIndex } from '../types/block'
+import { SerializedDiff } from '../utils/serializer'
 
 interface BlockContextValue<TBlock extends Block = Block> {
   blocks: TBlock[]
@@ -23,6 +24,7 @@ interface BlockContextValue<TBlock extends Block = Block> {
   deleteItem: (id: string) => void
   moveItem: (activeId: UniqueIdentifier, hoverZone: string) => void
   setAll: (blocks: TBlock[]) => void
+  applyDiff: (diff: SerializedDiff) => void
   lastCreatedItem: TBlock | null
   lastDeletedIds: string[]
   lastMoveTimestamp: number
@@ -131,6 +133,10 @@ export function createBlockContext<TBlock extends Block = Block>() {
       dispatch({ type: 'SET_ALL', payload: all })
     }, [])
 
+    const applyDiff = useCallback((diff: SerializedDiff ) => {
+      dispatch({ type: 'APPLY_DIFF', payload: diff })
+    }, [])
+
     const value: BlockContextValue<TBlock> = useMemo(() => ({
       blocks,
       blockMap,
@@ -140,11 +146,12 @@ export function createBlockContext<TBlock extends Block = Block>() {
       deleteItem,
       moveItem,
       setAll,
+      applyDiff,
       lastCreatedItem,
       lastDeletedIds,
       lastMoveTimestamp,
       normalizedIndex: state,
-    }), [blocks, blockMap, childrenMap, indexMap, createItem, deleteItem, moveItem, setAll, lastCreatedItem, lastDeletedIds, lastMoveTimestamp, state])
+    }), [blocks, blockMap, childrenMap, indexMap, createItem, deleteItem, moveItem, setAll, applyDiff, lastCreatedItem, lastDeletedIds, lastMoveTimestamp, state])
 
     return (
       <BlockContext.Provider value={value}>

@@ -8,6 +8,7 @@ import { useDraggable } from '@dnd-kit/core'
 import Section from '../Section'
 import { useBlocks } from '@/app/providers/BlockProvider'
 import { Block } from '@/app/types/block'
+import { useBlockContent } from '@/app/hooks/useBlockContent'
 
 interface Props {
   block: Block
@@ -19,10 +20,10 @@ const SectionContainer = ({ block }: Props) => {
     blocksByParent,
     expandedMap,
     dispatchExpand,
-    data,
     hoverZone,
     activeItem,
     hoveredId,
+    blocks,
   } = useTreeContext()
 
   const isHovered = useMemo(() => {
@@ -39,7 +40,7 @@ const SectionContainer = ({ block }: Props) => {
 
   const children = useMemo(() => blocksByParent.get(block.id) ?? [], [block.id, blocksByParent])
   const isExpanded = !!expandedMap[block.id]
-  const content = data?.get(block.id)
+  const content = useBlockContent(block, blocks)
   const isSection = activeItem ? activeItem.type === 'section' : false
 
   const {

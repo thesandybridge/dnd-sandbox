@@ -1,4 +1,5 @@
 import { UniqueIdentifier } from "@dnd-kit/core"
+import { SerializedDiff } from "../utils/serializer"
 
 export interface BaseBlock {
   id: string
@@ -14,6 +15,7 @@ export type BlockAction<T extends BaseBlock> =
   | { type: 'DELETE_ITEM'; payload: { id: string } }
   | { type: 'SET_ALL'; payload: T[] }
   | { type: 'MOVE_ITEM'; payload: { activeId: UniqueIdentifier; hoverZone: string } }
+  | { type: 'APPLY_DIFF'; payload: SerializedDiff }
 
 export interface Block extends BaseBlock {
   testId?: string
