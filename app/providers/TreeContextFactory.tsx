@@ -38,6 +38,9 @@ export function createTreeContext<TContent = unknown, TBlock extends Block = Blo
       const { blocks } = useBlocks()
       const [activeId, setActiveId] = useState<string | null>(null)
       const [hoverZone, setHoverZone] = useState<string | null>(null)
+      const [isVirtual, setIsVirtual] = useState(false);
+
+      const toggleVirtual = useCallback((): void => setIsVirtual(!isVirtual), [isVirtual])
 
       const initialExpanded = useMemo(() => {
         if (expandAll) {
@@ -109,7 +112,9 @@ export function createTreeContext<TContent = unknown, TBlock extends Block = Blo
         ItemRenderer,
         activeItem,
         expandAll,
-      }), [DisplayKey, ItemRenderer, activeBlock, activeId, activeItem, blocks, blocksByParent, data, effectiveExpandedMap, expandAll, handleHover, hoverZone, isShiftHeld])
+        isVirtual,
+        toggleVirtual,
+      }), [DisplayKey, ItemRenderer, activeBlock, activeId, activeItem, blocks, blocksByParent, data, effectiveExpandedMap, expandAll, handleHover, hoverZone, isShiftHeld, isVirtual, toggleVirtual])
 
       return <TreeContext.Provider value={value}>{children}</TreeContext.Provider>
     }
@@ -137,6 +142,8 @@ interface TreeContextType<T, TBlock extends Block> {
   ItemRenderer: ItemRenderer<T>
   activeItem: T | null
   expandAll?: boolean
+  isVirtual: boolean,
+  toggleVirtual: () => void
 }
 
 type ItemRenderer<T> = (props: { id: string; content: T }) => JSX.Element | null

@@ -2,7 +2,6 @@
 
 import { memo } from "react"
 import { TreeProvider } from '../providers/TreeProvider'
-import TreeRenderer from "./TreeRenderer"
 import { useAgendaDetails, BlockContent } from "../hooks/useAgendaDetails"
 import { useTreeContext } from "../providers/TreeProvider"
 import { useBlocks } from "../providers/BlockProvider"
@@ -12,19 +11,55 @@ import { useSyncAgendaContent } from "../hooks/useSyncAgendaContext"
 import { useBlockSerialization } from "../hooks/useBlockSerialization"
 import { MiniMap } from "./MiniMap"
 import ActionItem from "./ActionItem"
-import VirtualTreeRenderer from "./TreeRenderer/VirtualTreeRenderer"
+import BlockTree from "./BlockTree"
+import useTestMode from "../hooks/useTestMode"
 
 const AgendaControls = () => {
   const { createItem } = useBlocks()
-  const { DisplayKey, isShiftHeld } = useTreeContext()
+  const { isTesting } = useTestMode()
+  const { DisplayKey, isShiftHeld, toggleVirtual, isVirtual } = useTreeContext()
 
   return (
-    <div className="flex p-4 gap-2">
-      <button onClick={() => createItem('section', null)} className="mb-4 px-3 py-1 bg-blue-500 text-white rounded">+ Section</button>
-      <button onClick={() => createItem('topic', null)} className="mb-4 px-3 py-1 bg-blue-500 text-white rounded">+ Topic</button>
-      <button onClick={() => createItem('objective', null)} className="mb-4 px-3 py-1 bg-blue-500 text-white rounded">+ Objective</button>
-      <button onClick={() => createItem('action-item', null)} className="mb-4 px-3 py-1 bg-blue-500 text-white rounded">+ Action Item</button>
-      {isShiftHeld && <DisplayKey />}
+    <div className="flex flex-col gap-1">
+      <div className="flex p-1 gap-2 items-center">
+        <button
+          onClick={() => createItem('section', null)}
+          className="px-3 py-1 bg-blue-500 text-white rounded"
+        >
+          + Section
+        </button>
+        <button
+          onClick={() => createItem('topic', null)}
+          className="px-3 py-1 bg-blue-500 text-white rounded"
+        >
+          + Topic
+        </button>
+        <button
+          onClick={() => createItem('objective', null)}
+          className="px-3 py-1 bg-blue-500 text-white rounded"
+        >
+          + Objective
+        </button>
+        <button
+          onClick={() => createItem('action-item', null)}
+          className="px-3 py-1 bg-blue-500 text-white rounded"
+        >
+          + Action Item
+        </button>
+      </div>
+      <div className="flex p-1 gap-2 items-center">
+        {!isTesting && (
+          <>
+            <button
+              onClick={toggleVirtual}
+              className="px-3 py-1 bg-blue-500 text-white rounded">
+              Toggle Virtual
+            </button>
+            {isVirtual && <div className="p-1 border-solid border border-purple-100">Virtual Tree Renderer Enabled</div>}
+          </>
+        )}
+        {isShiftHeld && <DisplayKey />}
+      </div>
     </div>
   )
 }
@@ -47,18 +82,15 @@ const ItemRenderer = ({ id, content }: { id: string, content: BlockContent }) =>
 }
 
 interface AgendaProps {
-  expandAll?: boolean,
-  diffView?: boolean,
-  virtualize?: boolean,
+  testing?: boolean,
 }
 const Agenda = ({
-  expandAll = false,
-  diffView = false,
-  virtualize = false,
+  testing = false,
 }: AgendaProps) => {
   const { blocks } = useBlocks()
   const { data } = useAgendaDetails(blocks)
   const { diff } = useBlockSerialization(blocks)
+  const { isTesting } = useTestMode(testing)
 
   useSyncAgendaContent()
 
@@ -68,20 +100,23 @@ const Agenda = ({
     <TreeProvider
       data={data}
       ItemRenderer={ItemRenderer}
-      expandAll={expandAll}
+      expandAll={testing}
     >
-      <div className="p-8 max-w-xl mx-auto">
+      <div className="p-8 max-w-6xl mx-auto">
         <h1 className="text-2xl font-semibold mb-6">Agenda DnD Demo</h1>
-        {virtualize && <p>Virtual Tree Renderer Enabled</p>}
         <AgendaControls />
-        {virtualize ? (
-          <VirtualTreeRenderer parentId={null} />
-        ) : (
-            <TreeRenderer parentId={null} />
+        <div className="flex gap-2">
+          <div className={isTesting ? "w-full" : "w-2/3"}>
+            <BlockTree />
+          </div>
+          {!isTesting && (
+            <div className="w-1/3">
+              <div className="sticky top-2 py-2">
+                <MiniMap blocks={blocks} changes={diff} />
+              </div>
+            </div>
           )}
-        {diffView && (
-          <MiniMap blocks={blocks} changes={diff} />
-        )}
+        </div>
       </div>
     </TreeProvider>
   )

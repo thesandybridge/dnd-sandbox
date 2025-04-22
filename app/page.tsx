@@ -8,7 +8,7 @@ export default function AgendaPage() {
     <>
       <ReactScan />
       <BlockProvider>
-        <Agenda virtualize diffView />
+        <Agenda />
       </BlockProvider>
     </>
   );
