@@ -25,7 +25,18 @@ const SectionContainer = ({ block }: Props) => {
     hoveredId,
   } = useTreeContext()
 
-  const isHovered = hoveredId === block.id
+  const isHovered = useMemo(() => {
+    if (hoveredId === block.id) return true
+    const stack: string[] = [block.id]
+    while (stack.length) {
+      const id = stack.pop()!
+      if (hoveredId === id) return true
+      const children = blocksByParent.get(id) ?? []
+      stack.push(...children.map(c => c.id))
+    }
+    return false
+  }, [hoveredId, block.id, blocksByParent])
+
   const children = useMemo(() => blocksByParent.get(block.id) ?? [], [block.id, blocksByParent])
   const isExpanded = !!expandedMap[block.id]
   const content = data?.get(block.id)
@@ -58,9 +69,9 @@ const SectionContainer = ({ block }: Props) => {
     <div
       ref={setNodeRef}
       style={style}
-      className={`transition-opacity ${isDragging ? 'opacity-0' : 'opacity-100'}`}
+      className={`transition-opacity ${isDragging ? 'opacity-0' : 'opacity-100'} rounded-lg border-2 ${isHovered ? 'border-green-500' : 'border-transparent'}`}
     >
-      <div className={`flex items-center gap-2 justify-between bg-gray-50 rounded-lg p-2 border-2 transition-colors duration-150 ${isHovered ? 'border-blue-500' : 'border-transparent'}`}>
+      <div className={`flex items-center gap-2 justify-between bg-gray-50 rounded-lg p-2 transition-colors duration-150`}>
         <div className="flex gap-2 align-center justify-center">
           <div
             {...listeners}
