@@ -1,4 +1,4 @@
-import { memo, useRef, useState } from 'react'
+import { memo, useRef } from 'react'
 import { SyntheticListenerMap } from '@dnd-kit/core/dist/hooks/utilities'
 import { DraggableAttributes } from '@dnd-kit/core'
 import { useLocalModifierKey } from '@/app/hooks/useLocalModifierKey'
@@ -20,15 +20,10 @@ const DragHandle = ({
 }: Props) => {
   const ref = useRef<HTMLButtonElement>(null)
   const shiftPressed = useLocalModifierKey(ref, 'Shift')
-  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null)
-
-  const openMenu = () => {
-    if (ref.current) setAnchorEl(ref.current)
-  }
 
   const handleClick = (e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation()
-    openMenu()
+    console.log(blockId)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -36,7 +31,7 @@ const DragHandle = ({
       e.stopPropagation()
 
       if (shiftPressed) {
-        openMenu()
+        console.log(blockId)
       } else {
         // trigger drag via DnDKit
         listeners?.onKeyDown?.(e)
@@ -45,7 +40,8 @@ const DragHandle = ({
   }
 
   return (
-    <>
+    <div className='flex gap-1 items-center'>
+      <AddItemMenu targetId={blockId} />
       <button
         {...listeners}
         {...attributes}
@@ -54,17 +50,12 @@ const DragHandle = ({
         onTouchEnd={handleClick}
         onKeyDown={handleKeyDown}
         tabIndex={0}
-        className="cursor-grab active:cursor-grabbing px-1 select-none"
+        className="w-8 h-8 cursor-grab active:cursor-grabbing select-none p-1 rounded border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         data-testid={testId ? `drag-handle-${testId}` : undefined}
       >
         ☰
       </button>
-      <AddItemMenu
-        targetId={blockId}
-        anchorEl={anchorEl}
-        setAnchorEl={setAnchorEl}
-      />
-    </>
+    </div>
   )
 }
 
