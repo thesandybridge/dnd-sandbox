@@ -28,3 +28,8 @@ export type BlockAction<T extends BaseBlock> =
 export interface Block extends BaseBlock {
   testId?: string
 }
+
+export interface BlockIndex<T extends BaseBlock = BaseBlock> {
+  byId: Map<string, T>
+  byParent: Map<string | null, string[]>
+}

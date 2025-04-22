@@ -1,11 +1,11 @@
 import { Block } from '@/app/types/block'
-import { blockReducer } from "@/app/reducers/blockReducer"
+import { blockReducer, BlockIndex } from "@/app/reducers/blockReducer"
 
 function createLargeBlock(sectionCount: number, topicsPerSection = 10): Block[] {
   const blocks: Block[] = []
   for (let i = 0; i < sectionCount; i++) {
     const sectionId = `section-${i}`
-    blocks.push({ id: sectionId, type: 'section', parentId: null })
+    blocks.push({ id: sectionId, type: 'section', parentId: null, itemId: sectionId })
 
     for (let j = 0; j < topicsPerSection; j++) {
       blocks.push({
@@ -19,20 +19,18 @@ function createLargeBlock(sectionCount: number, topicsPerSection = 10): Block[] 
   return blocks
 }
 
-function buildMaps(blocks: Block[]) {
-  const blockMap = new Map<string, Block>()
-  const childrenMap = new Map<string | null, Block[]>()
-  const indexMap = new Map<string, number>()
+function normalize(blocks: Block[]): BlockIndex<Block> {
+  const byId = new Map<string, Block>()
+  const byParent = new Map<string | null, string[]>()
 
-  blocks.forEach((block, index) => {
-    blockMap.set(block.id, block)
-    indexMap.set(block.id, index)
+  for (const block of blocks) {
+    byId.set(block.id, block)
     const key = block.parentId ?? null
-    const children = childrenMap.get(key) ?? []
-    childrenMap.set(key, [...children, block])
-  })
+    const list = byParent.get(key) ?? []
+    byParent.set(key, [...list, block.id])
+  }
 
-  return { blockMap, childrenMap, indexMap }
+  return { byId, byParent }
 }
 
 function getRandom<T>(arr: T[]): T {
@@ -48,17 +46,15 @@ describe('blockReducer performance under randomized MOVE_ITEM', () => {
 
   testScenarios.forEach(({ sectionCount, topicsPerSection, maxMs }) => {
     it(`performs ${sectionCount * topicsPerSection} MOVE_ITEM actions in under ${maxMs}ms`, () => {
-      const topicCount = sectionCount * topicsPerSection
-      const movesToPerform = topicCount
-
-      let state = createLargeBlock(sectionCount, topicsPerSection)
-
-      const topicIds = state.filter(b => b.type === 'topic').map(b => b.id)
+      const flat = createLargeBlock(sectionCount, topicsPerSection)
+      const topicIds = flat.filter(b => b.type === 'topic').map(b => b.id)
       const dropZones = topicIds.map(id => `after-${id}`)
+
+      let state = normalize(flat)
 
       const start = performance.now()
 
-      for (let i = 0; i < movesToPerform; i++) {
+      for (let i = 0; i < topicIds.length; i++) {
         const activeId = getRandom(topicIds)
         let hoverZone = getRandom(dropZones)
 
@@ -66,31 +62,27 @@ describe('blockReducer performance under randomized MOVE_ITEM', () => {
           hoverZone = getRandom(dropZones)
         }
 
-        const { blockMap, childrenMap, indexMap } = buildMaps(state)
-
         state = blockReducer(state, {
           type: 'MOVE_ITEM',
           payload: {
             activeId,
             hoverZone,
-            blockMap,
-            childrenMap,
-            indexMap,
           }
         })
       }
 
       const end = performance.now()
       const duration = end - start
-      const avg = duration / movesToPerform
-
-      expect(state.length).toBe(sectionCount + topicCount)
+      const avg = duration / topicIds.length
 
       console.log(
-        `Performed ${movesToPerform} random MOVE_ITEM actions in ${duration.toFixed(
-2
-)}ms (avg: ${avg.toFixed(4)}ms per move)`
+        `Performed ${topicIds.length} random MOVE_ITEM actions in ${duration.toFixed(
+          2
+        )}ms (avg: ${avg.toFixed(4)}ms per move)`
       )
+
+      const totalBlocks = sectionCount + (sectionCount * topicsPerSection)
+      expect(state.byId.size).toBe(totalBlocks)
 
       expect(duration).toBeLessThan(maxMs)
     })

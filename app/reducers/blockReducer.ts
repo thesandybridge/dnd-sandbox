@@ -1,58 +1,72 @@
-import { BaseBlock, BlockAction } from "../types/block";
-import { reparentBlock } from "../utils/blocks";
-
-function collectDescendantsDFS<T extends BaseBlock>(state: T[], rootId: string): Set<string> {
-    const map = new Map<string, T[]>()
-    for (const item of state) {
-        const list = map.get(item.parentId ?? '') ?? []
-        map.set(item.parentId ?? '', [...list, item])
-    }
-
-    const toDelete = new Set<string>()
-    const stack = [rootId]
-
-    while (stack.length > 0) {
-        const id = stack.pop()!
-        toDelete.add(id)
-        const children = map.get(id) ?? []
-        for (const child of children) {
-            stack.push(child.id)
-        }
-    }
-
-    return toDelete
-}
+import { BaseBlock, BlockAction, BlockIndex } from "../types/block"
+import { cloneMap, cloneParentMap, reparentBlockIndex } from "../utils/blocks"
 
 export function blockReducer<T extends BaseBlock>(
-  state: T[],
+  state: BlockIndex<T>,
   action: BlockAction<T>
-): T[] {
+): BlockIndex<T> {
   switch (action.type) {
-    case 'ADD_ITEM':
-      return [...state, action.payload];
+    case 'ADD_ITEM': {
+      const byId = cloneMap(state.byId)
+      const byParent = cloneParentMap(state.byParent)
+      const item = action.payload
 
-    case 'DELETE_ITEM': {
-      const toDelete = collectDescendantsDFS(state, action.payload.id)
-      return state.filter(item => !toDelete.has(item.id))
+      byId.set(item.id, item)
+      const list = byParent.get(item.parentId ?? null) ?? []
+      byParent.set(item.parentId ?? null, [...list, item.id])
+
+      return { byId, byParent }
     }
 
-    case 'SET_ALL':
-      return action.payload;
+    case 'DELETE_ITEM': {
+      const byId = cloneMap(state.byId)
+      const byParent = cloneParentMap(state.byParent)
+
+      const collectDescendants = (id: string): Set<string> => {
+        const toDelete = new Set<string>()
+        const stack = [id]
+        while (stack.length > 0) {
+          const current = stack.pop()!
+          toDelete.add(current)
+          const children = byParent.get(current) ?? []
+          stack.push(...children)
+        }
+        return toDelete
+      }
+
+      const idsToDelete = collectDescendants(action.payload.id)
+      for (const id of idsToDelete) {
+        byId.delete(id)
+        byParent.delete(id)
+      }
+
+      for (const [parent, list] of byParent.entries()) {
+        byParent.set(parent, list.filter(id => !idsToDelete.has(id)))
+      }
+
+      return { byId, byParent }
+    }
+
+    case 'SET_ALL': {
+      const byId = new Map<string, T>()
+      const byParent = new Map<string | null, string[]>()
+
+      for (const block of action.payload) {
+        byId.set(block.id, block)
+        const key = block.parentId ?? null
+        const list = byParent.get(key) ?? []
+        byParent.set(key, [...list, block.id])
+      }
+
+      return { byId, byParent }
+    }
 
     case 'MOVE_ITEM': {
-      const { activeId, hoverZone, blockMap, childrenMap, indexMap } = action.payload
-
-      return reparentBlock<T>(
-        state,
-        blockMap,
-        childrenMap,
-        indexMap,
-        activeId,
-        hoverZone
-      )
+      return reparentBlockIndex(state, action.payload.activeId, action.payload.hoverZone)
     }
 
     default:
-      return state;
+      return state
   }
 }
+
