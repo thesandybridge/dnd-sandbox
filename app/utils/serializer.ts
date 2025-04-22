@@ -7,13 +7,32 @@ export type SerializedAgenda = {
   base64: string
 }
 
-type SerializedBlock = [string, string | null, number, string, string?]
+type BlockType = Block['type']
 
-export function serializeBlocks(blocks: Block[]): SerializedAgenda {
-  const sorted = [...blocks].sort((a, b) => {
-    if (a.parentId === b.parentId) return a.order - b.order
+type SerializedBlock = [
+  id: string,
+  parentId: string | null,
+  order: number,
+  type: BlockType,
+  itemId?: string
+]
+
+function sortBlocks(blocks: Block[], indexMap?: Map<string, number>) {
+  return [...blocks].sort((a, b) => {
+    if (a.parentId === b.parentId) {
+      if (a.order === b.order) {
+        const ai = indexMap?.get(a.id) ?? 0
+        const bi = indexMap?.get(b.id) ?? 0
+        return ai - bi
+      }
+      return a.order - b.order
+    }
     return String(a.parentId).localeCompare(String(b.parentId))
   })
+}
+
+export function serializeBlocks(blocks: Block[]): SerializedAgenda {
+  const sorted = sortBlocks(blocks)
 
   const minimal: SerializedBlock[] = sorted.map(b => [
     b.id,
@@ -35,10 +54,12 @@ export function serializeBlocks(blocks: Block[]): SerializedAgenda {
 }
 
 export function serializeBlockIndex(index: BlockIndex<Block>): SerializedAgenda {
-  const sorted = Array.from(index.byId.values()).sort((a, b) => {
-    if (a.parentId === b.parentId) return a.order - b.order
-    return String(a.parentId).localeCompare(String(b.parentId))
-  })
+  const flat = Array.from(index.byParent.entries())
+  .flatMap(([parentId, ids]) => ids.map((id, i) => ({ id, i, parentId })))
+
+  const indexMap = new Map(flat.map(({ id }, idx) => [id, idx]))
+
+  const sorted = sortBlocks(Array.from(index.byId.values()), indexMap)
 
   const minimal: SerializedBlock[] = sorted.map(b => [
     b.id,
