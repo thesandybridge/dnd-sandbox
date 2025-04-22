@@ -16,7 +16,7 @@ import useTestMode from "../hooks/useTestMode"
 import SandboxControls from "./SandboxControls"
 
 const AgendaControls = () => {
-  const { createItem } = useBlocks()
+  const { createItem, setAll } = useBlocks()
   const { isTesting } = useTestMode()
   const { DisplayKey, isShiftHeld, toggleVirtual, isVirtual } = useTreeContext()
 
@@ -46,6 +46,12 @@ const AgendaControls = () => {
           className="px-3 py-1 bg-blue-500 text-white rounded"
         >
           + Action Item
+        </button>
+        <button
+          onClick={() => setAll([])}
+          className="px-3 py-1 bg-orange-500 text-white rounded"
+        >
+          Reset
         </button>
       </div>
       <div className="flex p-1 gap-2 items-center">
