@@ -6,6 +6,7 @@ import { useDraggable } from '@dnd-kit/core'
 import { useBlocks } from '../providers/BlockProvider'
 import { Block } from '../types/block'
 import { ActionItemContent } from '../hooks/useAgendaDetails'
+import DragHandle from './BlockTree/DragHandle'
 
 interface Props {
   block: Block
@@ -35,14 +36,12 @@ const ActionItem = ({ block, content }: Props) => {
       style={style}
       className={`transition-opacity ${isDragging ? 'opacity-0' : 'opacity-100'} flex gap-2 p-2 items-center space-between rounded-lg p-4 border border-gray-300`}
     >
-      <div
-        {...listeners}
-        {...attributes}
-        className="cursor-move px-1"
-        data-testid={block.testId ? `drag-handle-${block.testId}` : undefined}
-      >
-        ☰ {/* drag handle icon */}
-      </div>
+      <DragHandle
+        listeners={listeners}
+        attributes={attributes}
+        onMenuOpen={() => console.log(block.itemId)}
+        testId={block.testId}
+      />
       <div className='grow'>
         {content.title}
       </div>

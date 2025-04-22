@@ -9,6 +9,7 @@ import Section from '../Section'
 import { useBlocks } from '@/app/providers/BlockProvider'
 import { Block } from '@/app/types/block'
 import { useBlockContent } from '@/app/hooks/useBlockContent'
+import DragHandle from './DragHandle'
 
 interface Props {
   block: Block
@@ -74,14 +75,12 @@ const SectionContainer = ({ block }: Props) => {
     >
       <div className={`flex items-center gap-2 justify-between bg-gray-50 rounded-lg p-2 transition-colors duration-150`}>
         <div className="flex gap-2 align-center justify-center">
-          <div
-            {...listeners}
-            {...attributes}
-            className="cursor-move px-1"
-            data-testid={block.testId ? `drag-handle-${block.testId}` : undefined}
-          >
-            ☰
-          </div>
+          <DragHandle
+            listeners={listeners}
+            attributes={attributes}
+            onMenuOpen={() => console.log(block.itemId)}
+            testId={block.testId}
+          />
           <button
             onClick={() => dispatchExpand({ type: 'TOGGLE', id: block.id })}
             className="text-gray-600"
