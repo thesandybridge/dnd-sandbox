@@ -35,7 +35,7 @@ export function MiniMap({ prev, next }: { prev: Block[], next: Block[] }) {
   const tree = buildTree(allBlocks)
 
   return (
-    <div className="p-2 rounded text-sm font-mono text-gray-800 bg-gray-100 border">
+    <div className="p-2 rounded text-sm font-mono text-gray-800 bg-gray-100 border max-h-64 overflow-auto sm:max-h-none sm:overflow-visible">
       {tree.map(node => (
         <MiniBlock key={node.id} block={node} changeMap={changeMap} />
       ))}
@@ -77,7 +77,7 @@ function MiniBlock({
       <div className="flex gap-1 items-center">
         <span className="text-sm">{icon}</span>
         <span className="text-xs">{block.type.toUpperCase()}</span>
-        <span className="text-gray-500 text-xs ml-auto">{block.id}</span>
+        <span className="text-gray-500 text-xs ml-auto truncate">{block.id}</span>
       </div>
 
       {block.children.map(child => (

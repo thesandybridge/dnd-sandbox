@@ -99,12 +99,12 @@ const Agenda = () => {
       <div className="p-8 max-w-6xl mx-auto">
         <h1 className="text-2xl font-semibold mb-6">Agenda DnD Demo</h1>
         <AgendaControls />
-        <div className="flex gap-2">
-          <div className={isTesting ? "w-full" : "w-2/3"}>
+        <div className="flex flex-col-reverse md:flex-row gap-2">
+          <div className={isTesting ? "w-full" : "md:w-2/3"}>
             <BlockTree />
           </div>
           {!isTesting && (
-            <div className="w-1/3">
+            <div className="md:w-1/3">
               <div className="sticky top-2 py-2">
                 <MiniMap prev={prev} next={next} />
               </div>
