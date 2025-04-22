@@ -11,8 +11,8 @@ import {
 } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import type { UniqueIdentifier } from '@dnd-kit/core'
-import { blockReducer, BlockIndex } from '../reducers/blockReducer'
-import { Block } from '../types/block'
+import { blockReducer } from '../reducers/blockReducer'
+import { Block, BlockIndex } from '../types/block'
 
 interface BlockContextValue<TBlock extends Block = Block> {
   blocks: TBlock[]

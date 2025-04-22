@@ -1,5 +1,5 @@
 import type { UniqueIdentifier } from '@dnd-kit/core'
-import { BaseBlock } from '../types/block'
+import { BaseBlock, BlockIndex } from '../types/block'
 
 /**
  * Reparents and repositions a block within a flat tree structure
@@ -109,13 +109,13 @@ export function cloneParentMap(map: Map<string | null, string[]>): Map<string | 
 
 export function reparentBlockIndex<T extends BaseBlock>(
   state: BlockIndex<T>,
-  activeId: string,
+  activeId: UniqueIdentifier,
   hoverZone: string
 ): BlockIndex<T> {
   const byId = cloneMap(state.byId)
   const byParent = cloneParentMap(state.byParent)
 
-  const dragged = byId.get(activeId)
+  const dragged = byId.get(String(activeId))
   if (!dragged) return state
 
   const zoneTargetId = hoverZone.replace(/^(before|after|into)-/, '')

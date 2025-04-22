@@ -1,4 +1,4 @@
-import { UniqueIdentifier } from "@dnd-kit/core";
+import { UniqueIdentifier } from "@dnd-kit/core"
 
 export interface BaseBlock {
   id: string
@@ -10,20 +10,10 @@ export interface BaseBlock {
 }
 
 export type BlockAction<T extends BaseBlock> =
-| { type: 'ADD_ITEM'; payload: T }
-| { type: 'DELETE_ITEM'; payload: { id: string } }
-| { type: 'SET_ALL'; payload: T[] }
-| {
-  type: 'MOVE_ITEM'
-  payload: {
-    activeId: UniqueIdentifier
-    hoverZone: string
-    blockMap: Map<string, T>
-    childrenMap: Map<string | null, T[]>
-    indexMap: Map<string, number>
-  }
-}
-
+  | { type: 'ADD_ITEM'; payload: T }
+  | { type: 'DELETE_ITEM'; payload: { id: string } }
+  | { type: 'SET_ALL'; payload: T[] }
+  | { type: 'MOVE_ITEM'; payload: { activeId: UniqueIdentifier; hoverZone: string } }
 
 export interface Block extends BaseBlock {
   testId?: string
