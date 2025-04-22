@@ -8,10 +8,11 @@ import {
   DragOverlay,
   closestCenter,
   KeyboardSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   DragStartEvent,
-  PointerSensor,
+  MouseSensor,
 } from '@dnd-kit/core'
 import { useBlocks } from '@/app/providers/BlockProvider'
 
@@ -30,10 +31,16 @@ const BlockTree = () => {
   } = useTreeContext()
   const { isTesting } = useTestMode()
   const sensors = useSensors(
-    useSensor(PointerSensor, {
+    useSensor(MouseSensor, {
       activationConstraint: {
         delay: 150,
         tolerance: 5
+      }
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 150,
+        tolerance: 5,
       }
     }),
     useSensor(KeyboardSensor),
@@ -59,10 +66,10 @@ const BlockTree = () => {
       sensors={sensors}
     >
       {(isVirtual || isTesting) ? (
-        <VirtualTreeRenderer parentId={null} />
+          <VirtualTreeRenderer parentId={null} />
       ) : (
-        <TreeRenderer parentId={null} />
-      )}
+          <TreeRenderer parentId={null} />
+        )}
       <DragOverlay>
         {activeBlock && (
           <div className="bg-white border border-gray-300 shadow-md rounded-md p-3 text-sm w-64 pointer-events-none">

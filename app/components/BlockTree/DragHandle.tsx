@@ -14,11 +14,10 @@ const DragHandle = ({ listeners, attributes, onMenuOpen, testId }: Props) => {
   const ref = useRef<HTMLDivElement>(null)
   const shiftPressed = useLocalModifierKey(ref, 'Shift')
 
-  const handleClick = (e: MouseEvent) => {
+  const handleClick = (e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation()
     onMenuOpen?.()
   }
-
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -39,9 +38,10 @@ const DragHandle = ({ listeners, attributes, onMenuOpen, testId }: Props) => {
       {...attributes}
       ref={ref}
       onClick={handleClick}
+      onTouchEnd={handleClick}
       onKeyDown={handleKeyDown}
       tabIndex={0}
-      className="cursor-grab active:cursor-grabbing px-1"
+      className="cursor-grab active:cursor-grabbing px-1 select-none"
       data-testid={testId ? `drag-handle-${testId}` : undefined}
     >
       ☰
