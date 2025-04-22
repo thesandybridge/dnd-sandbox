@@ -64,7 +64,7 @@ function MiniBlock({
       color = 'bg-red-100'
       break
     case 'changed':
-      icon = '⚡️'
+      icon = '~'
       color = 'bg-yellow-100'
       break
   }
