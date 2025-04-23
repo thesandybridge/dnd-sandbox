@@ -33,7 +33,7 @@ const BlockTree = () => {
   const sensors = useSensors(
     useSensor(MouseSensor, {
       activationConstraint: {
-        delay: 150,
+        delay: 100,
         tolerance: 5
       }
     }),

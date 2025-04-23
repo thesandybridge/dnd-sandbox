@@ -1,5 +1,6 @@
 import type { UniqueIdentifier } from '@dnd-kit/core'
 import { BaseBlock, BlockIndex } from '../types/block'
+import { extractUUID } from './helper'
 
 export function cloneMap<K, V>(map: Map<K, V>): Map<K, V> {
   return new Map(map)
@@ -24,7 +25,7 @@ export function reparentBlockIndex<T extends BaseBlock>(
   const dragged = byId.get(String(activeId))
   if (!dragged) return state
 
-  const zoneTargetId = hoverZone.replace(/^(before|after|into)-/, '')
+  const zoneTargetId = extractUUID(hoverZone)
   const isAfter = hoverZone.startsWith('after-')
   const isInto = hoverZone.startsWith('into-')
   const target = byId.get(zoneTargetId)

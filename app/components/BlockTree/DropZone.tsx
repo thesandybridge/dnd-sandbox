@@ -3,16 +3,19 @@
 import { useDroppable } from '@dnd-kit/core'
 import { memo, useCallback, useEffect, useMemo } from 'react'
 import { useTreeContext } from '@/app/providers/TreeProvider'
+import { Block } from '@/app/types/block'
+import { extractUUID } from '@/app/utils/helper'
 
 interface Props {
   id: string
   parentId: string | null
-  type?: 'topic' | 'section' | 'objective'
+  type?: Block['type']
 }
 
 const DropZone = ({ id, parentId, type }: Props) => {
-  const { setNodeRef, isOver } = useDroppable({ id })
+  const { setNodeRef, isOver, active } = useDroppable({ id })
   const { handleHover } = useTreeContext()
+
 
   const handleInternalHover = useCallback(() => {
     handleHover(id, parentId)
@@ -30,6 +33,8 @@ const DropZone = ({ id, parentId, type }: Props) => {
         return 'bg-blue-500'
     }
   }, [type])
+
+  if (active?.id === extractUUID(id)) return null
 
   return (
     <div
