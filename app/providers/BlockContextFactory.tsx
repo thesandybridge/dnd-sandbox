@@ -20,7 +20,12 @@ interface BlockContextValue<TBlock extends Block = Block> {
   blockMap: Map<string, TBlock>
   childrenMap: Map<string | null, TBlock[]>
   indexMap: Map<string, number>
-  createItem: (type: TBlock['type'], parentId?: string | null, testId?: string) => TBlock
+  createItem: (
+    type: TBlock['type'],
+    parentId?: string | null,
+    testId?: string,
+    itemId?: string,
+  ) => TBlock
   insertItem: (type: TBlock['type'], referenceId: string, position: 'before' | 'after') => TBlock // ← Add this
   deleteItem: (id: string) => void
   moveItem: (activeId: UniqueIdentifier, hoverZone: string) => void
@@ -104,18 +109,22 @@ export function createBlockContext<TBlock extends Block = Block>() {
       return map
     }, [state])
 
-    const createItem = useCallback((type: TBlock['type'], parentId: string | null = null): TBlock => {
-      const newItem = {
-        id: uuidv4(),
-        type,
-        itemId: uuidv4(),
-        parentId,
-      } as TBlock
+    const createItem = useCallback((
+      type: TBlock['type'],
+      parentId: string | null = null,
+      itemId?: string,
+    ): TBlock => {
+        const newItem = {
+          id: uuidv4(),
+          type,
+          itemId: itemId ?? uuidv4(),
+          parentId,
+        } as TBlock
 
-      dispatch({ type: 'ADD_ITEM', payload: newItem })
-      setLastCreatedItem(newItem)
-      return newItem
-    }, [])
+        dispatch({ type: 'ADD_ITEM', payload: newItem })
+        setLastCreatedItem(newItem)
+        return newItem
+      }, [])
 
     const insertItem = useCallback((
       type: TBlock['type'],

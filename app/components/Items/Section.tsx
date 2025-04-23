@@ -5,9 +5,8 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { useQueryClient } from '@tanstack/react-query'
 
-import { BlockContent } from '../hooks/useAgendaDetails'
-import { SectionContent } from '../hooks/useAgendaDetails'
-import { Block } from '../types/block'
+import { Block } from '@/app/types/block'
+import { BlockContent, SectionContent } from '@/app/hooks/useAgendaDetails'
 
 interface Props {
   block: Block

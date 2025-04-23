@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import type { BlockContent } from '@/app/hooks/useAgendaDetails'
+import { mockContentStore, type BlockContent } from '@/app/hooks/useAgendaDetails'
 import { useBlocks } from '../providers/BlockProvider'
 
 export function useSyncAgendaContent() {
@@ -18,10 +18,18 @@ export function useSyncAgendaContent() {
     if (!lastCreatedItem) return
 
     queryClient.setQueryData<Map<string, BlockContent>>(['agenda-details'], (old) => {
+      const blockId = lastCreatedItem.id
       const itemId = lastCreatedItem.itemId
       const map = new Map(old ?? [])
-      let content: BlockContent
 
+      const existing = mockContentStore.get(itemId)
+      if (existing) {
+        map.set(blockId, existing)
+        return map
+      }
+
+      // fallback default content (only used if nothing was passed in via useAgendaItem)
+      let content: BlockContent
       switch (lastCreatedItem.type) {
         case 'section':
           content = {
@@ -36,7 +44,7 @@ export function useSyncAgendaContent() {
             id: itemId,
             type: 'topic',
             title: `TOPIC ${itemId.slice(0, 4)}`,
-            description: ''
+            description: '',
           }
           break
         case 'objective':
@@ -44,7 +52,7 @@ export function useSyncAgendaContent() {
             id: itemId,
             type: 'objective',
             title: `OBJECTIVE ${itemId.slice(0, 4)}`,
-            progress: 0
+            progress: 0,
           }
           break
         case 'action-item':
@@ -58,7 +66,8 @@ export function useSyncAgendaContent() {
           return map
       }
 
-      map.set(lastCreatedItem.id, content)
+      mockContentStore.set(itemId, content)
+      map.set(blockId, content)
       return map
     })
   }, [lastCreatedItem, queryClient])

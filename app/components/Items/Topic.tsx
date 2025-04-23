@@ -1,15 +1,16 @@
 'use client'
 
-import { memo, useCallback, useEffect } from 'react'
+import { memo, useCallback, useEffect, useState } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { useQueryClient } from '@tanstack/react-query'
 
-import { BlockContent, TopicContent } from '../hooks/useAgendaDetails'
 import { useDraggable } from '@dnd-kit/core'
-import { useBlocks } from '../providers/BlockProvider'
-import { Block } from '../types/block'
-import DragHandle from './BlockTree/DragHandle'
+import { Block } from '@/app/types/block'
+import { BlockContent, TopicContent } from '@/app/hooks/useAgendaDetails'
+import { useBlocks } from '@/app/providers/BlockProvider'
+import DragHandle from '../BlockTree/DragHandle'
+import Comments from './Comments'
 
 interface Props {
   block: Block
@@ -17,14 +18,19 @@ interface Props {
 }
 
 const Topic = ({ block, content }: Props) => {
+  const [showComments, setShowComments] = useState(false)
   const queryClient = useQueryClient()
   const { deleteItem } = useBlocks()
+
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: block.id
   });
+
   const style = {
     transform: `translate(${transform?.x ?? 0}px, ${transform?.y ?? 0}px)`,
   };
+
+  const handleToggleComments = useCallback(() => setShowComments(!showComments), [showComments])
 
   const handleDelete = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -81,22 +87,39 @@ const Topic = ({ block, content }: Props) => {
     <div
       ref={setNodeRef}
       style={style}
-      className={`transition-opacity ${isDragging ? 'opacity-0' : 'opacity-100'} flex gap-2 p-2 items-center space-between rounded-lg p-4 border border-gray-300`}
+      className={`transition-opacity ${isDragging ? 'opacity-0' : 'opacity-100'} flex flex-col gap-2 items-center rounded-lg p-4 border border-gray-300`}
     >
-      <DragHandle
-        listeners={listeners}
-        attributes={attributes}
-        testId={block.testId}
-        blockId={block.id}
-      />
-      <div className='grow'>
-        <EditorContent editor={editor} />
+      <div className='flex gap-2 items-center space-between w-full'>
+        <DragHandle
+          listeners={listeners}
+          attributes={attributes}
+          testId={block.testId}
+          blockId={block.id}
+        />
+        <div className='grow'>
+          <EditorContent editor={editor} />
+        </div>
+        <button
+          onClick={handleDelete}
+        >
+          ×
+        </button>
       </div>
-      <button
-        onClick={handleDelete}
-      >
-        ×
-      </button>
+
+      <div className='flex flex-col w-full justify-center items-center'>
+        <button
+          onClick={handleToggleComments}
+        >
+          {showComments ? 'Hide Comments' : 'Show Comments'}
+        </button>
+        {showComments && (
+          <div className='w-full flex flex-col gap-2'>
+            {Array.from({ length: 10 }, (_, index) => (
+              <Comments key={index} id={index} />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

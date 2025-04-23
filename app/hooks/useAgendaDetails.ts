@@ -29,12 +29,12 @@ export type ActionItemContent = {
 }
 
 export type BlockContent =
-SectionContent
-| TopicContent
-| ObjectiveContent
-| ActionItemContent
+  | SectionContent
+  | TopicContent
+  | ObjectiveContent
+  | ActionItemContent
 
-const mockContentStore = new Map<string, BlockContent>()
+export const mockContentStore = new Map<string, BlockContent>()
 
 export const useAgendaDetails = (blocks: Block[]) => {
   return useQuery({
@@ -49,50 +49,53 @@ export const useAgendaDetails = (blocks: Block[]) => {
         let existing = mockContentStore.get(itemId)
 
         if (!existing) {
+          let defaults: BlockContent
+
           switch (b.type) {
             case 'section':
-              existing = {
+              defaults = {
                 id: itemId,
                 type: 'section',
                 title: `SECTION ${itemId.slice(0, 4)}`,
-                summary: ''
+                summary: '',
               }
               break
             case 'topic':
-              existing = {
+              defaults = {
                 id: itemId,
                 type: 'topic',
                 title: `TOPIC ${itemId.slice(0, 4)}`,
-                description: ''
+                description: '',
               }
               break
             case 'objective':
-              existing = {
+              defaults = {
                 id: itemId,
                 type: 'objective',
                 title: `OBJECTIVE ${itemId.slice(0, 4)}`,
-                progress: 0
+                progress: 0,
               }
               break
             case 'action-item':
-              existing = {
+              defaults = {
                 id: itemId,
                 type: 'action-item',
-                title: `ACTION ITEM ${itemId.slice(0, 4)}`
+                title: `ACTION ITEM ${itemId.slice(0, 4)}`,
               }
               break
             default:
               continue
           }
 
+          existing = defaults
           mockContentStore.set(itemId, existing)
         }
 
-        map.set(itemId, existing!)
+        map.set(b.id, existing)
       }
 
       return map
     },
-    staleTime: Infinity
+    staleTime: Infinity,
   })
 }

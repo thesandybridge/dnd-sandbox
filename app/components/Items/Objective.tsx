@@ -5,11 +5,11 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { useQueryClient } from '@tanstack/react-query'
 
-import { BlockContent, ObjectiveContent } from '../hooks/useAgendaDetails'
 import { useDraggable } from '@dnd-kit/core'
-import { useBlocks } from '../providers/BlockProvider'
-import { Block } from '../types/block'
-import DragHandle from './BlockTree/DragHandle'
+import { Block } from '@/app/types/block'
+import { BlockContent, ObjectiveContent } from '@/app/hooks/useAgendaDetails'
+import { useBlocks } from '@/app/providers/BlockProvider'
+import DragHandle from '../BlockTree/DragHandle'
 
 interface Props {
   block: Block

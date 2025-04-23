@@ -3,10 +3,10 @@
 import { memo, useCallback } from 'react'
 
 import { useDraggable } from '@dnd-kit/core'
-import { useBlocks } from '../providers/BlockProvider'
-import { Block } from '../types/block'
-import { ActionItemContent } from '../hooks/useAgendaDetails'
-import DragHandle from './BlockTree/DragHandle'
+import { Block } from '@/app/types/block'
+import { ActionItemContent } from '@/app/hooks/useAgendaDetails'
+import { useBlocks } from '@/app/providers/BlockProvider'
+import DragHandle from '../BlockTree/DragHandle'
 
 interface Props {
   block: Block
