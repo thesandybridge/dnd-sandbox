@@ -52,13 +52,13 @@ const Agenda = () => {
       <div className="p-8 max-w-6xl mx-auto">
         <h1 className="text-2xl font-semibold mb-6">Agenda DnD Demo</h1>
         <AgendaControls />
-        <SandboxControls />
         <div className="flex flex-col-reverse md:flex-row gap-2">
           <div className={isTesting ? "w-full" : "md:w-2/3"}>
             <BlockTree />
           </div>
           {!isTesting && (
             <div className="md:w-1/3">
+              <SandboxControls />
               <div className="sticky top-2 py-2">
                 <MiniMap prev={prev} next={next} />
               </div>
