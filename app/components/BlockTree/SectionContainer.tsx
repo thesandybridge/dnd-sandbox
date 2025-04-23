@@ -10,6 +10,8 @@ import { useBlocks } from '@/app/providers/BlockProvider'
 import { Block } from '@/app/types/block'
 import { useBlockContent } from '@/app/hooks/useBlockContent'
 import DragHandle from './DragHandle'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faDeleteLeft, faSquareMinus, faSquarePlus } from '@fortawesome/free-solid-svg-icons'
 
 interface Props {
   block: Block
@@ -84,14 +86,16 @@ const SectionContainer = ({ block }: Props) => {
           />
           <button
             onClick={() => dispatchExpand({ type: 'TOGGLE', id: block.id })}
-            className="text-gray-600"
+            className="text-gray-600 w-8 h-8"
           >
-            {isExpanded ? '▾' : '▸'}
+            <FontAwesomeIcon icon={isExpanded ? faSquareMinus : faSquarePlus } />
           </button>
         </div>
         {content?.type === 'section' && <Section block={block} content={content} />}
-        <button onClick={handleDelete} className="p-1 text-red-600">×</button>
         {!isExpanded && <div>{children.length} Item{children.length === 1 ? '' : 's'}</div>}
+        <button onClick={handleDelete} className="p-1 text-red-600">
+          <FontAwesomeIcon icon={faDeleteLeft} />
+        </button>
       </div>
 
       {children.length === 0 && isExpanded && !isSection && (

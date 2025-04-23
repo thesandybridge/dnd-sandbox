@@ -4,6 +4,8 @@ import { memo, useCallback, useRef, useState } from 'react'
 import { useBlocks } from '@/app/providers/BlockProvider'
 import type { Block } from '@/app/types/block'
 import { Popover } from '@mui/material'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faPlus } from '@fortawesome/free-solid-svg-icons'
 
 type Props = {
   targetId: Block['id']
@@ -38,9 +40,9 @@ const AddItemMenu = ({ targetId }: Props) => {
         ref={ref}
         onClick={handleClick}
         onTouchEnd={handleClick}
-        className="w-8 h-8 p-1 select-none rounded border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="flex items-center justify-center w-6 h-6 text-sm select-none rounded border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
       >
-        +
+        <FontAwesomeIcon icon={faPlus} />
       </button>
       <Popover
         open={open}
