@@ -26,7 +26,12 @@ interface BlockContextValue<TBlock extends Block = Block> {
     testId?: string,
     itemId?: string,
   ) => TBlock
-  insertItem: (type: TBlock['type'], referenceId: string, position: 'before' | 'after') => TBlock // ← Add this
+  insertItem: (
+    type: TBlock['type'],
+    referenceId: string,
+    position: 'before' | 'after',
+    itemId?: string,
+  ) => TBlock
   deleteItem: (id: string) => void
   moveItem: (activeId: UniqueIdentifier, hoverZone: string) => void
   setAll: (blocks: TBlock[]) => void
@@ -129,7 +134,8 @@ export function createBlockContext<TBlock extends Block = Block>() {
     const insertItem = useCallback((
       type: TBlock['type'],
       referenceId: string,
-      position: 'before' | 'after'
+      position: 'before' | 'after',
+      itemId?: string,
     ): TBlock => {
         const referenceBlock = state.byId.get(referenceId)
         if (!referenceBlock) throw new Error(`Reference block ${referenceId} not found`)
@@ -142,7 +148,7 @@ export function createBlockContext<TBlock extends Block = Block>() {
         const newItem = {
           id: uuidv4(),
           type,
-          itemId: uuidv4(),
+          itemId: itemId ?? uuidv4(),
           parentId,
         } as TBlock
 

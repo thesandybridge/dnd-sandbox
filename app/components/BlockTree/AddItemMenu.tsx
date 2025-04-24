@@ -6,6 +6,7 @@ import type { Block } from '@/app/types/block'
 import { Popover } from '@mui/material'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPlus } from '@fortawesome/free-solid-svg-icons'
+import { useAgenda } from '@/app/hooks/useAgenda'
 
 type Props = {
   targetId: Block['id']
@@ -15,15 +16,50 @@ const AddItemMenu = ({ targetId }: Props) => {
   const ref = useRef<HTMLButtonElement>(null)
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null)
   const { insertItem } = useBlocks()
+  const { create } = useAgenda()
 
   const openMenu = () => {
     if (ref.current) setAnchorEl(ref.current)
   }
 
   const handleAdd = useCallback((type: Block['type']) => {
-    insertItem(type, targetId, 'after')
+    const itemId = crypto.randomUUID()
+    const block = insertItem(type, targetId, 'after')
+    switch (type) {
+      case 'section':
+        create({
+          id: itemId,
+          type,
+          title: `SECTION ${itemId.slice(0, 4)}`,
+          summary: '',
+        }, block.id)
+        break
+      case 'topic':
+        create({
+          id: itemId,
+          type,
+          title: `TOPIC ${itemId.slice(0, 4)}`,
+          description: '',
+        }, block.id)
+        break
+      case 'objective':
+        create({
+          id: itemId,
+          type,
+          title: `OBJECTIVE ${itemId.slice(0, 4)}`,
+          progress: 0,
+        }, block.id)
+        break
+      case 'action-item':
+        create({
+          id: itemId,
+          type,
+          title: `ACTION ITEM ${itemId.slice(0, 4)}`,
+        }, block.id)
+        break
+    }
     setAnchorEl(null)
-  }, [insertItem, targetId, setAnchorEl])
+  }, [insertItem, targetId, create])
 
   const handleClick = (e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation()
