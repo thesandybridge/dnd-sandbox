@@ -3,7 +3,6 @@
 import { memo } from "react"
 import { useTreeContext } from "@/app/providers/TreeProvider"
 import { useBlocks } from "@/app/providers/BlockProvider"
-import { useBlockContent } from "@/app/hooks/useBlockContent"
 
 interface Props {
   id: string
@@ -11,12 +10,11 @@ interface Props {
 
 const ItemWrapper = ({ id }: Props) => {
   const { blockMap } = useBlocks()
-  const { ItemRenderer, hoveredId, blocks } = useTreeContext()
+  const { ItemRenderer, hoveredId } = useTreeContext()
 
   const block = blockMap.get(id)
-  const content = useBlockContent(block, blocks)
 
-  if (!block || !content) return null
+  if (!block) return null
 
   const isHovered = hoveredId === block.id
 
@@ -26,7 +24,6 @@ const ItemWrapper = ({ id }: Props) => {
     >
       <ItemRenderer
         id={id}
-        content={content}
       />
     </div>
   )

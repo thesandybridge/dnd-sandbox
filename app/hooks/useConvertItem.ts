@@ -1,14 +1,14 @@
 'use client'
 
-import { useAgendaItem } from './useAgendaItem'
 import { useBlocks } from '@/app/providers/BlockProvider'
-import type { BlockContent } from '@/app/hooks/useAgendaDetails'
 import { Block } from '@/app/types/block'
+import { BlockContent } from '../types/agenda'
+import { useAgenda } from './useAgenda'
 
 type BlockContentWithoutId = Omit<BlockContent, 'id'>
 
 export function useConvertItem() {
-  const { create } = useAgendaItem()
+  const { create } = useAgenda()
   const { createItem } = useBlocks()
 
   const convert = <T extends BlockContentWithoutId>(

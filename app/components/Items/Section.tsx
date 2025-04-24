@@ -6,14 +6,14 @@ import StarterKit from '@tiptap/starter-kit'
 import { useQueryClient } from '@tanstack/react-query'
 
 import { Block } from '@/app/types/block'
-import { BlockContent, SectionContent } from '@/app/hooks/useAgendaDetails'
+import { BlockContent, SectionContent } from '@/app/types/agenda'
 
 interface Props {
-  block: Block
+  blockId: Block['id']
   content?: SectionContent
 }
 
-const Section = ({ block, content }: Props) => {
+const Section = ({ blockId, content }: Props) => {
   const queryClient = useQueryClient()
 
   const editor = useEditor({
@@ -38,10 +38,10 @@ const Section = ({ block, content }: Props) => {
     onUpdate({ editor }) {
       queryClient.setQueryData<Map<string, BlockContent>>(['agenda-details'], (old) => {
         const map = new Map(old ?? [])
-        const current = map.get(block.id)
+        const current = map.get(blockId)
         if (!current) return map
 
-        map.set(block.id, {
+        map.set(blockId, {
           ...current,
           title: editor.getText().trim()
         })

@@ -32,7 +32,7 @@ export function createTreeContext<TContent = unknown, TBlock extends Block = Blo
     }: {
         children: ReactNode
         data: Map<string, TContent>
-        ItemRenderer: ItemRenderer<TContent>
+        ItemRenderer: ItemRenderer
         expandAll?: boolean
       }) => {
       const { blocks } = useBlocks()
@@ -150,7 +150,7 @@ interface TreeContextType<T, TBlock extends Block> {
   isShiftHeld: boolean
   DisplayKey: React.FC
   handleHover: (zoneId: string, parentId: string | null) => void
-  ItemRenderer: ItemRenderer<T>
+  ItemRenderer: ItemRenderer
   activeItem: T | null
   expandAll?: boolean
   isVirtual: boolean
@@ -159,4 +159,4 @@ interface TreeContextType<T, TBlock extends Block> {
   setHoveredId: (id: string | null) => void
 }
 
-type ItemRenderer<T> = (props: { id: string; content: T }) => JSX.Element | null
+type ItemRenderer = (props: { id: string }) => JSX.Element | null

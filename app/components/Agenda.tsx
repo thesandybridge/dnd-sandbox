@@ -2,11 +2,9 @@
 
 import { memo } from "react"
 import { TreeProvider } from '../providers/TreeProvider'
-import { useAgendaDetails, BlockContent } from "../hooks/useAgendaDetails"
 import { useBlocks } from "../providers/BlockProvider"
 import Topic from "./Items/Topic"
 import Objective from "./Items/Objective"
-import { useSyncAgendaContent } from "../hooks/useSyncAgendaContext"
 import { useBlockSerialization } from "../hooks/useBlockSerialization"
 import { MiniMap } from "./MiniMap"
 import ActionItem from "./Items/ActionItem"
@@ -14,19 +12,21 @@ import BlockTree from "./BlockTree"
 import useTestMode from "../hooks/useTestMode"
 import SandboxControls from "./SandboxControls"
 import AgendaControls from "./AgendaControls"
+import { useAgenda } from "../hooks/useAgenda"
 
-const ItemRenderer = ({ id, content }: { id: string, content: BlockContent }) => {
-  const { blockMap } = useBlocks()
-  const block = blockMap.get(id)
-  if (!block) return null
+const ItemRenderer = ({ id }: { id: string }) => {
+  const { get } = useAgenda()
+  const content = get(id)
+
+  if (!content) return null
 
   switch (content.type) {
     case "topic":
-      return <Topic block={block} content={content} />
+      return <Topic blockId={id} content={content} />
     case "objective":
-      return <Objective block={block} content={content} />
+      return <Objective blockId={id} content={content} />
     case "action-item":
-      return <ActionItem block={block} content={content} />
+      return <ActionItem blockId={id} content={content} />
     default:
       return null
   }
@@ -35,17 +35,16 @@ const ItemRenderer = ({ id, content }: { id: string, content: BlockContent }) =>
 
 const Agenda = () => {
   const { blocks, normalizedIndex} = useBlocks()
-  const { data } = useAgendaDetails(blocks)
+  const { getAll } = useAgenda()
+  const agendaData = getAll()
   const { prev, next } = useBlockSerialization(blocks, normalizedIndex)
   const { isTesting } = useTestMode()
 
-  useSyncAgendaContent()
-
-  if (!data) return null
+  if (!agendaData) return null
 
   return (
     <TreeProvider
-      data={data}
+      data={agendaData}
       ItemRenderer={ItemRenderer}
       expandAll={isTesting}
     >

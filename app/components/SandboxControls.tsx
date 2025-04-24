@@ -6,7 +6,7 @@ import { useBlocks } from '@/app/providers/BlockProvider'
 import { cryptoHash, serializeBlock, SerializedDiff } from '@/app/utils/serializer'
 import type { Block } from '@/app/types/block'
 import { useQueryClient } from '@tanstack/react-query'
-import type { BlockContent } from '@/app/hooks/useAgendaDetails'
+import { BlockContent } from '../types/agenda'
 
 export default function SandboxControls() {
   const queryClient = useQueryClient()

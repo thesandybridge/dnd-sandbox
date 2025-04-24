@@ -5,7 +5,7 @@ import {
   ObjectiveContent,
   SectionContent,
   TopicContent,
-} from '@/app/hooks/useAgendaDetails'
+} from '@/app/types/agenda'
 import { useConvertItem } from '@/app/hooks/useConvertItem'
 import { memo, useCallback } from 'react'
 

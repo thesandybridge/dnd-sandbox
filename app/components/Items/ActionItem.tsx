@@ -4,19 +4,21 @@ import { memo, useCallback } from 'react'
 
 import { useDraggable } from '@dnd-kit/core'
 import { Block } from '@/app/types/block'
-import { ActionItemContent } from '@/app/hooks/useAgendaDetails'
 import { useBlocks } from '@/app/providers/BlockProvider'
 import DragHandle from '../BlockTree/DragHandle'
+import { useAgenda } from '@/app/hooks/useAgenda'
+import { ActionItemContent } from '@/app/types/agenda'
 
 interface Props {
-  block: Block
+  blockId: Block['id']
   content?: ActionItemContent
 }
 
-const ActionItem = ({ block, content }: Props) => {
+const ActionItem = ({ blockId, content }: Props) => {
   const { deleteItem } = useBlocks()
+  const { remove } = useAgenda()
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: block.id
+    id: blockId
   });
   const style = {
     transform: `translate(${transform?.x ?? 0}px, ${transform?.y ?? 0}px)`,
@@ -24,8 +26,9 @@ const ActionItem = ({ block, content }: Props) => {
 
   const handleDelete = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    deleteItem(block.id);
-  }, [block.id, deleteItem]);
+    deleteItem(blockId);
+    remove(blockId)
+  }, [blockId, deleteItem, remove]);
 
 
   if (!content) return null
@@ -39,8 +42,7 @@ const ActionItem = ({ block, content }: Props) => {
       <DragHandle
         listeners={listeners}
         attributes={attributes}
-        blockId={block.id}
-        testId={block.testId}
+        blockId={blockId}
       />
       <div className='grow'>
         {content.title}

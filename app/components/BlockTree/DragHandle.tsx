@@ -6,20 +6,22 @@ import { DraggableAttributes } from '@dnd-kit/core'
 import { useLocalModifierKey } from '@/app/hooks/useLocalModifierKey'
 import { Block } from '@/app/types/block'
 import AddItemMenu from './AddItemMenu'
+import { useBlocks } from '@/app/providers/BlockProvider'
 
 type Props = {
   listeners?: SyntheticListenerMap
   attributes: DraggableAttributes
-  testId?: string
   blockId: Block['id']
 }
 
 const DragHandle = ({
   listeners,
   attributes,
-  testId,
   blockId,
 }: Props) => {
+  const { blockMap } = useBlocks()
+  const block = blockMap.get(blockId)
+  const testId = block?.testId
   const ref = useRef<HTMLButtonElement>(null)
   const shiftPressed = useLocalModifierKey(ref, 'Shift')
 

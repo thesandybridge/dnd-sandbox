@@ -8,10 +8,10 @@ import { useDraggable } from '@dnd-kit/core'
 import Section from '../Items/Section'
 import { useBlocks } from '@/app/providers/BlockProvider'
 import { Block } from '@/app/types/block'
-import { useBlockContent } from '@/app/hooks/useBlockContent'
 import DragHandle from './DragHandle'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faDeleteLeft, faSquareMinus, faSquarePlus } from '@fortawesome/free-solid-svg-icons'
+import { useAgenda } from '@/app/hooks/useAgenda'
 
 interface Props {
   block: Block
@@ -20,6 +20,7 @@ interface Props {
 const SectionContainer = ({ block }: Props) => {
 
   const { createItem, deleteItem } = useBlocks()
+  const { create, remove, get } = useAgenda()
   const {
     blocksByParent,
     expandedMap,
@@ -27,7 +28,6 @@ const SectionContainer = ({ block }: Props) => {
     hoverZone,
     activeItem,
     hoveredId,
-    blocks,
   } = useTreeContext()
 
   const isHovered = useMemo(() => {
@@ -44,7 +44,7 @@ const SectionContainer = ({ block }: Props) => {
 
   const children = useMemo(() => blocksByParent.get(block.id) ?? [], [block.id, blocksByParent])
   const isExpanded = !!expandedMap[block.id]
-  const content = useBlockContent(block, blocks)
+  const content = get(block.id)
   const isSection = activeItem ? activeItem.type === 'section' : false
 
   const {
@@ -68,8 +68,47 @@ const SectionContainer = ({ block }: Props) => {
   const handleDelete = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
     deleteItem(block.id)
-  }, [block.id, deleteItem])
+    remove(block.id)
+  }, [block.id, deleteItem, remove])
 
+  const handleCreateItem = useCallback((type: Block['type']) => {
+    const itemId = crypto.randomUUID()
+    const newBlock = createItem(type, block.id, itemId)
+
+    switch (type) {
+      case 'topic':
+        create({
+          id: itemId,
+          type,
+          title: `TOPIC ${itemId.slice(0, 4)}`,
+          description: '',
+        }, newBlock.id)
+        break
+      case 'objective':
+        create({
+          id: itemId,
+          type,
+          title: `OBJECTIVE ${itemId.slice(0, 4)}`,
+          progress: 0,
+        }, newBlock.id)
+        break
+      case 'action-item':
+        create({
+          id: itemId,
+          type,
+          title: `ACTION ITEM ${itemId.slice(0, 4)}`,
+        }, newBlock.id)
+        break
+      case 'section':
+        create({
+          id: itemId,
+          type,
+          title: `SECTION ${itemId.slice(0, 4)}`,
+          summary: '',
+        }, newBlock.id)
+        break
+    }
+  }, [block.id, create, createItem])
   return (
     <div
       ref={setNodeRef}
@@ -81,7 +120,6 @@ const SectionContainer = ({ block }: Props) => {
           <DragHandle
             listeners={listeners}
             attributes={attributes}
-            testId={block.testId}
             blockId={block.id}
           />
           <button
@@ -91,7 +129,7 @@ const SectionContainer = ({ block }: Props) => {
             <FontAwesomeIcon icon={isExpanded ? faSquareMinus : faSquarePlus } />
           </button>
         </div>
-        {content?.type === 'section' && <Section block={block} content={content} />}
+        {content?.type === 'section' && <Section blockId={block.id} content={content} />}
         {!isExpanded && <div>{children.length} Item{children.length === 1 ? '' : 's'}</div>}
         <button onClick={handleDelete} className="p-1 text-red-600">
           <FontAwesomeIcon icon={faDeleteLeft} />
@@ -128,13 +166,19 @@ const SectionContainer = ({ block }: Props) => {
           </div>
 
           <div className="flex p-4 gap-2">
-            <div className="flex items-center justify-center p-2 cursor-pointer" onClick={() => createItem('topic', block.id)}>
+            <div
+              className="flex items-center justify-center p-2 cursor-pointer"
+              onClick={() => handleCreateItem('topic')}>
               + Add Topic
             </div>
-            <div className="flex items-center justify-center p-2 cursor-pointer" onClick={() => createItem('objective', block.id)}>
+            <div
+              className="flex items-center justify-center p-2 cursor-pointer"
+              onClick={() => handleCreateItem('objective')}>
               + Add Objective
             </div>
-            <div className="flex items-center justify-center p-2 cursor-pointer" onClick={() => createItem('action-item', block.id)}>
+            <div
+              className="flex items-center justify-center p-2 cursor-pointer"
+              onClick={() => handleCreateItem('action-item')}>
               + Add Action Item
             </div>
           </div>

@@ -7,23 +7,25 @@ import { useQueryClient } from '@tanstack/react-query'
 
 import { useDraggable } from '@dnd-kit/core'
 import { Block } from '@/app/types/block'
-import { BlockContent, TopicContent } from '@/app/hooks/useAgendaDetails'
+import { BlockContent, TopicContent } from '@/app/types/agenda'
 import { useBlocks } from '@/app/providers/BlockProvider'
 import DragHandle from '../BlockTree/DragHandle'
 import Comments from './Comments'
+import { useAgenda } from '@/app/hooks/useAgenda'
 
 interface Props {
-  block: Block
+  blockId: Block['id']
   content?: TopicContent
 }
 
-const Topic = ({ block, content }: Props) => {
+const Topic = ({ blockId, content }: Props) => {
   const [showComments, setShowComments] = useState(false)
   const queryClient = useQueryClient()
   const { deleteItem } = useBlocks()
+  const { remove } = useAgenda()
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: block.id
+    id: blockId
   });
 
   const style = {
@@ -34,8 +36,9 @@ const Topic = ({ block, content }: Props) => {
 
   const handleDelete = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    deleteItem(block.id);
-  }, [block.id, deleteItem]);
+    deleteItem(blockId);
+    remove(blockId)
+  }, [blockId, deleteItem, remove]);
 
   const editor = useEditor({
     content: content?.title,
@@ -59,10 +62,10 @@ const Topic = ({ block, content }: Props) => {
     onUpdate({ editor }) {
       queryClient.setQueryData<Map<string, BlockContent>>(['agenda-details'], (old) => {
         const map = new Map(old ?? [])
-        const current = map.get(block.id)
+        const current = map.get(blockId)
         if (!current) return map
 
-        map.set(block.id, {
+        map.set(blockId, {
           ...current,
           title: editor.getText().trim()
         })
@@ -93,8 +96,7 @@ const Topic = ({ block, content }: Props) => {
         <DragHandle
           listeners={listeners}
           attributes={attributes}
-          testId={block.testId}
-          blockId={block.id}
+          blockId={blockId}
         />
         <div className='grow'>
           <EditorContent editor={editor} />
