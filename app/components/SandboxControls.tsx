@@ -7,10 +7,12 @@ import { cryptoHash, serializeBlock, SerializedDiff } from '@/app/utils/serializ
 import type { Block } from '@/app/types/block'
 import { useQueryClient } from '@tanstack/react-query'
 import { BlockContent } from '../types/agenda'
+import { useAgenda } from '../hooks/useAgenda'
 
 export default function SandboxControls() {
   const queryClient = useQueryClient()
   const { blocks, applyDiff } = useBlocks()
+  const { create } = useAgenda()
 
   const [queuedDiff, setQueuedDiff] = useState<SerializedDiff>({
     added: [],
@@ -38,49 +40,39 @@ export default function SandboxControls() {
       added: [...prev.added, serializeBlock(block)],
     }))
 
-    // ⬇️ Inject mock content into the agenda-details cache
-    queryClient.setQueryData<Map<string, BlockContent>>(['agenda-details'], (old) => {
-      const map = new Map(old ?? [])
-
-      let content: BlockContent
-
-      switch (block.type) {
-        case 'section':
-          content = {
-            id: block.itemId,
-            type: 'section',
-            title: `SECTION ${block.itemId.slice(0, 4)}`,
-            summary: '',
-          }
-          break
-        case 'topic':
-          content = {
-            id: block.itemId,
-            type: 'topic',
-            title: `TOPIC ${block.itemId.slice(0, 4)}`,
-            description: '',
-          }
-          break
-        case 'objective':
-          content = {
-            id: block.itemId,
-            type: 'objective',
-            title: `OBJECTIVE ${block.itemId.slice(0, 4)}`,
-            progress: 0,
-          }
-          break
-        case 'action-item':
-          content = {
-            id: block.itemId,
-            type: 'action-item',
-            title: `ACTION ITEM ${block.itemId.slice(0, 4)}`,
-          }
-          break
-      }
-
-      map.set(block.id, content)
-      return map
-    })
+     switch (type) {
+      case 'section':
+        create({
+          id: block.itemId,
+          type,
+          title: `SECTION ${block.itemId.slice(0, 4)}`,
+          summary: '',
+        }, block.id)
+        break
+      case 'topic':
+        create({
+          id: block.itemId,
+          type,
+          title: `TOPIC ${block.itemId.slice(0, 4)}`,
+          description: '',
+        }, block.id)
+        break
+      case 'objective':
+        create({
+          id: block.itemId,
+          type,
+          title: `OBJECTIVE ${block.itemId.slice(0, 4)}`,
+          progress: 0,
+        }, block.id)
+        break
+      case 'action-item':
+        create({
+          id: block.itemId,
+          type,
+          title: `ACTION ITEM ${block.itemId.slice(0, 4)}`,
+        }, block.id)
+        break
+    }
   }
 
   const applyQueuedDiff = () => {
