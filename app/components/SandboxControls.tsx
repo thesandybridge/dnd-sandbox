@@ -34,7 +34,6 @@ export default function SandboxControls() {
       itemId: uuidv4(),
     }
 
-    // ⬇️ Add to diff queue
     setQueuedDiff(prev => ({
       ...prev,
       added: [...prev.added, serializeBlock(block)],

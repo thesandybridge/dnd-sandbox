@@ -6,7 +6,7 @@ import { ReactScan } from './ReactScan';
 export default function AgendaPage() {
   return (
     <>
-      <ReactScan />
+      <ReactScan enabled />
       <BlockProvider>
         <Agenda />
       </BlockProvider>
